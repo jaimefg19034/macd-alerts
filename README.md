@@ -12,7 +12,7 @@ Alertas de cruces MACD en velas de **1 hora** para:
 - MRNA
 - SAN.MC — Banco Santander (Bolsa de Madrid)
 - EURUSD=X — EUR/USD
-- GBPUSD=X — GBP/USD
+- EURGBP=X — EUR/GBP
 
 ## Qué hace
 
@@ -20,7 +20,7 @@ Alertas de cruces MACD en velas de **1 hora** para:
 - Solo analiza velas que ya han terminado.
 - Calcula MACD estándar: EMA 12 menos EMA 26, y línea de señal EMA 9.
 - Envía una alerta a Telegram si, al cierre de una vela, MACD cruza por encima o por debajo de la línea de señal.
-- En Santander muestra el precio en EUR; en EUR/USD y GBP/USD muestra la cotización con cinco decimales.
+- En Santander muestra el precio en EUR; en EUR/USD y EUR/GBP muestra la cotización con cinco decimales.
 - Guarda qué velas ha procesado para evitar repetir señales.
 - No compra ni vende acciones: solo envía avisos.
 
