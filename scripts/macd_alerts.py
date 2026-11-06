@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Confirmed one-hour MACD crossover alerts for eight US-listed tickers.
+"""Confirmed one-hour MACD crossover alerts for US/Spanish shares and major FX pairs.
 
 Data source: Yahoo Finance chart endpoint (unofficial; may be delayed/rate-limited).
 Notifications: Telegram Bot API.
@@ -187,6 +187,100 @@ def format_alert(symbol: str, direction: str, candle_timestamp: int,
     )
 
 
+def nth_weekday(year: int, month: int, weekday: int, n: int):
+    """Return the date of the nth weekday (Monday=0) in a month."""
+    from datetime import date, timedelta
+    first = date(year, month, 1)
+    return first + timedelta(days=(weekday - first.weekday()) % 7 + 7 * (n - 1))
+
+
+def last_weekday(year: int, month: int, weekday: int):
+    """Return the date of the last weekday (Monday=0) in a month."""
+    from datetime import date, timedelta
+    from calendar import monthrange
+    last = date(year, month, monthrange(year, month)[1])
+    return last - timedelta(days=(last.weekday() - weekday) % 7)
+
+
+def easter_sunday(year: int):
+    """Gregorian Easter date."""
+    from datetime import date
+    a = year % 19
+    b, c = divmod(year, 100)
+    d, e = divmod(b, 4)
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = (h + l - 7 * m + 114) % 31 + 1
+    return date(year, month, day)
+
+
+def observed_fixed_holiday(year: int, month: int, day: int):
+    from datetime import date, timedelta
+    holiday = date(year, month, day)
+    if holiday.weekday() == 5:
+        return holiday - timedelta(days=1)
+    if holiday.weekday() == 6:
+        return holiday + timedelta(days=1)
+    return holiday
+
+
+def us_market_holidays(year: int) -> set:
+    """Main NYSE full-day holidays (excluding exceptional one-off closures)."""
+    from datetime import timedelta
+    easter = easter_sunday(year)
+    return {
+        observed_fixed_holiday(year, 1, 1),
+        nth_weekday(year, 1, 0, 3),       # Martin Luther King Jr. Day
+        nth_weekday(year, 2, 0, 3),       # Presidents Day
+        easter - timedelta(days=2),       # Good Friday
+        last_weekday(year, 5, 0),         # Memorial Day
+        observed_fixed_holiday(year, 6, 19),  # Juneteenth
+        observed_fixed_holiday(year, 7, 4),   # Independence Day
+        nth_weekday(year, 9, 0, 1),       # Labor Day
+        nth_weekday(year, 11, 3, 4),      # Thanksgiving
+        observed_fixed_holiday(year, 12, 25),
+    }
+
+
+def market_is_open(symbol: str) -> bool:
+    """Check the normal trading session for each exchange/FX market."""
+    now_utc = datetime.now(timezone.utc)
+
+    if symbol in ("EURUSD=X", "GBPUSD=X"):
+        # FX normally trades from Sunday 17:00 to Friday 17:00 New York time.
+        ny = now_utc.astimezone(ZoneInfo("America/New_York"))
+        if ny.weekday() == 5:
+            return False
+        if ny.weekday() == 6:
+            return ny.hour >= 17
+        if ny.weekday() == 4:
+            return ny.hour < 17
+        return True
+
+    if symbol == "SAN.MC":
+        # Madrid Stock Exchange continuous session: 09:00-17:30 local time.
+        madrid_now = now_utc.astimezone(MADRID)
+        return (
+            madrid_now.weekday() < 5
+            and (madrid_now.hour, madrid_now.minute) >= (9, 0)
+            and (madrid_now.hour, madrid_now.minute) < (17, 30)
+        )
+
+    # US-listed shares: regular NYSE/Nasdaq session, 09:30-16:00 New York.
+    ny = now_utc.astimezone(ZoneInfo("America/New_York"))
+    if ny.weekday() >= 5 or ny.date() in us_market_holidays(ny.year):
+        return False
+    return (
+        (ny.hour, ny.minute) >= (9, 30)
+        and (ny.hour, ny.minute) < (16, 0)
+    )
+
+
 def main() -> int:
     old_state = load_state()
     new_state = dict(old_state)
@@ -194,6 +288,9 @@ def main() -> int:
     errors: list[str] = []
 
     for symbol in TICKERS:
+        if not market_is_open(symbol):
+            print(f"{symbol}: mercado cerrado; se omite la consulta.")
+            continue
         try:
             bars = get_completed_hourly_bars(symbol)
             timestamps = [timestamp for timestamp, _ in bars]
