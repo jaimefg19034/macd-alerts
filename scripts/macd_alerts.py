@@ -17,7 +17,17 @@ import urllib.request
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-TICKERS = ("AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "MRNA")
+TICKERS = (
+    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "MRNA",
+    "SAN.MC",       # Banco Santander, cotizado en Madrid
+    "EURUSD=X",     # EUR/USD
+    "GBPUSD=X",     # GBP/USD
+)
+SYMBOL_INFO = {
+    "SAN.MC": ("Banco Santander", "EUR", 3),
+    "EURUSD=X": ("EUR/USD", "USD", 5),
+    "GBPUSD=X": ("GBP/USD", "USD", 5),
+}
 STATE_FILE = "data/last_signals.json"
 CANDLE_SECONDS = 60 * 60
 LOOKBACK_DAYS = 60
