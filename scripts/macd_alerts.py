@@ -21,12 +21,12 @@ TICKERS = (
     "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "MRNA",
     "SAN.MC",       # Banco Santander, cotizado en Madrid
     "EURUSD=X",     # EUR/USD
-    "GBPUSD=X",     # GBP/USD
+    "EURGBP=X",     # EUR/GBP
 )
 SYMBOL_INFO = {
     "SAN.MC": ("Banco Santander", "EUR", 3),
     "EURUSD=X": ("EUR/USD", "USD", 5),
-    "GBPUSD=X": ("GBP/USD", "USD", 5),
+    "EURGBP=X": ("EUR/GBP", "GBP", 5),
 }
 STATE_FILE = "data/last_signals.json"
 CANDLE_SECONDS = 60 * 60
@@ -179,11 +179,12 @@ def split_message(message: str, limit: int = 3500) -> list[str]:
 def format_alert(symbol: str, direction: str, candle_timestamp: int,
                  close_price: float, macd_value: float, signal_value: float) -> str:
     candle_start = datetime.fromtimestamp(candle_timestamp, tz=timezone.utc).astimezone(MADRID)
+    display_name, currency, precision = SYMBOL_INFO.get(symbol, (symbol, "USD", 2))
     return (
-        f"{direction} — {symbol}\n"
+        f"{direction} — {display_name}\n"
         f"MACD: {macd_value:.4f} | Señal: {signal_value:.4f}\n"
         f"Inicio de la vela: {candle_start:%d/%m/%Y %H:%M} (hora de Madrid)\n"
-        f"Cierre: {close_price:.2f} USD"
+        f"Cierre: {close_price:.{precision}f} {currency}"
     )
 
 
@@ -251,7 +252,7 @@ def market_is_open(symbol: str) -> bool:
     """Check the normal trading session for each exchange/FX market."""
     now_utc = datetime.now(timezone.utc)
 
-    if symbol in ("EURUSD=X", "GBPUSD=X"):
+    if symbol in ("EURUSD=X", "EURGBP=X"):
         # FX normally trades from Sunday 17:00 to Friday 17:00 New York time.
         ny = now_utc.astimezone(ZoneInfo("America/New_York"))
         if ny.weekday() == 5:
