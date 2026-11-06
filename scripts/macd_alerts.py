@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 TICKERS = (
-    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "MRNA",
+    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "MRNA", "OCGN",
     "SAN.MC",       # Banco Santander, cotizado en Madrid
     "EURUSD=X",     # EUR/USD
     "EURGBP=X",     # EUR/GBP
@@ -27,6 +27,7 @@ SYMBOL_INFO = {
     "SAN.MC": ("Banco Santander", "EUR", 3),
     "EURUSD=X": ("EUR/USD", "USD", 5),
     "EURGBP=X": ("EUR/GBP", "GBP", 5),
+    "OCGN": ("Ocugen", "USD", 4),
 }
 PENDING_STATE_FILE = "data/pending_crosses.json"
 CONFIRMATION_SECONDS = 10 * 60
