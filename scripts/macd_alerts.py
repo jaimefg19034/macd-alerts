@@ -30,7 +30,6 @@ SYMBOL_INFO = {
     "OCGN": ("Ocugen", "USD", 4),
 }
 PENDING_STATE_FILE = "data/pending_crosses.json"
-CONFIRMATION_SECONDS = 10 * 60
 CANDLE_SECONDS = 60 * 60
 LOOKBACK_DAYS = 60
 MADRID = ZoneInfo("Europe/Madrid")
@@ -44,7 +43,7 @@ def get_json(url: str) -> dict:
 
 
 def get_hourly_bars(symbol: str) -> list[tuple[int, float]]:
-    """Return hourly bars including the currently forming one-hour candle."""
+    """Return only fully closed one-hour candles."""
     now = int(time.time())
     query = urllib.parse.urlencode({
         "period1": now - LOOKBACK_DAYS * 24 * 60 * 60,
@@ -67,7 +66,9 @@ def get_hourly_bars(symbol: str) -> list[tuple[int, float]]:
     bars: list[tuple[int, float]] = []
     for timestamp, close in zip(timestamps, closes):
         timestamp = int(timestamp)
-        if close is not None and timestamp <= now:
+        # Yahoo timestamps hourly candles at their start. Ignore the still-forming
+        # candle so every signal is based exclusively on completed 1H data.
+        if close is not None and timestamp + CANDLE_SECONDS <= now:
             bars.append((timestamp, float(close)))
 
     bars.sort(key=lambda item: item[0])
@@ -189,7 +190,7 @@ def format_alert(symbol: str, direction: str, candle_timestamp: int,
         f"MACD: {macd_value:.4f} | Señal: {signal_value:.4f}\n"
         f"Vela 1H iniciada: {candle_start:%d/%m/%Y %H:%M} (hora de Madrid)\n"
         f"Precio al confirmar: {close_price:.{precision}f} {currency}\n"
-        f"Confirmación: cruce mantenido durante 10 minutos"
+        f"Confirmación: cierre de vela 1H"
     )
 
 
@@ -288,16 +289,13 @@ def market_is_open(symbol: str) -> bool:
 
 
 def main() -> int:
-    old_pending = load_pending_state()
-    new_pending = dict(old_pending)
-    last_sent = dict(old_pending.get("_last_sent", {}))
+    old_state = load_pending_state()
+    last_sent = dict(old_state.get("_last_sent", {}))
     alerts: list[str] = []
     errors: list[str] = []
-    now = int(time.time())
 
     for symbol in TICKERS:
         if not market_is_open(symbol):
-            new_pending.pop(symbol, None)
             print(f"{symbol}: mercado cerrado; se omite la consulta.")
             continue
         try:
@@ -310,7 +308,7 @@ def main() -> int:
                 print(f"{symbol}: histórico insuficiente para calcular el cruce.")
                 continue
             if macd[-1] is None or signal[-1] is None:
-                print(f"{symbol}: MACD actual no disponible.")
+                print(f"{symbol}: MACD no disponible.")
                 continue
 
             previous_relation = (
@@ -324,66 +322,43 @@ def main() -> int:
                 else 0
             )
 
-            fresh_direction = None
+            direction = None
             if previous_relation <= 0 and current_relation > 0:
-                fresh_direction = "BUY"
+                direction = "BUY"
             elif previous_relation >= 0 and current_relation < 0:
-                fresh_direction = "SELL"
+                direction = "SELL"
 
-            pending = new_pending.get(symbol)
-            if pending:
-                pending_direction = pending.get("direction")
-                expected_relation = 1 if pending_direction == "BUY" else -1
-                if current_relation == expected_relation:
-                    elapsed = now - int(pending.get("started_at", now))
-                    if elapsed >= CONFIRMATION_SECONDS:
-                        candle_timestamp = int(pending.get("candle_timestamp", timestamps[-1]))
-                        alert_key = f"{pending_direction}:{candle_timestamp}"
-                        if last_sent.get(symbol) != alert_key:
-                            direction_text = "🟢 COMPRA" if pending_direction == "BUY" else "🔴 VENTA"
-                            alerts.append(format_alert(
-                                symbol, direction_text, timestamps[-1], closes[-1],
-                                float(macd[-1]), float(signal[-1])
-                            ))
-                            last_sent[symbol] = alert_key
-                            print(f"{symbol}: cruce {pending_direction} confirmado tras {elapsed // 60} min.")
-                        else:
-                            print(f"{symbol}: esta señal ya se había enviado.")
-                        new_pending.pop(symbol, None)
-                    else:
-                        remaining = CONFIRMATION_SECONDS - elapsed
-                        print(f"{symbol}: cruce {pending_direction} sigue activo; faltan {remaining // 60} min aprox.")
-                else:
-                    new_pending.pop(symbol, None)
-                    print(f"{symbol}: cruce pendiente cancelado; ya no se mantiene.")
-
-            if not new_pending.get(symbol) and fresh_direction:
-                alert_key = f"{fresh_direction}:{timestamps[-1]}"
+            if direction:
+                candle_timestamp = timestamps[-1]
+                alert_key = f"{direction}:{candle_timestamp}"
                 if last_sent.get(symbol) != alert_key:
-                    new_pending[symbol] = {
-                        "direction": fresh_direction,
-                        "started_at": now,
-                        "candle_timestamp": timestamps[-1],
-                    }
-                    print(f"{symbol}: nuevo cruce {fresh_direction}; empieza la confirmación de 10 min.")
-            elif not new_pending.get(symbol):
-                print(f"{symbol}: sin nuevo cruce intravela que iniciar.")
+                    direction_text = "🟢 COMPRA" if direction == "BUY" else "🔴 VENTA"
+                    alerts.append(format_alert(
+                        symbol, direction_text, candle_timestamp, closes[-1],
+                        float(macd[-1]), float(signal[-1])
+                    ))
+                    last_sent[symbol] = alert_key
+                    print(f"{symbol}: cruce {direction} confirmado al cierre de la vela 1H.")
+                else:
+                    print(f"{symbol}: esta señal ya se había enviado.")
+            else:
+                print(f"{symbol}: sin nuevo cruce en la última vela cerrada.")
 
         except Exception as error:
             errors.append(f"{symbol}: {error}")
             print(f"ERROR {symbol}: {error}", file=sys.stderr)
 
-    # Send first. If Telegram fails, the previous pending state remains and the alert is retried.
+    # Send first. If Telegram fails, last_sent is not saved and the alert is retried.
     if alerts:
-        message = "📈 ALERTAS MACD — 1H / CONFIRMACIÓN 10 MIN\n\n" + "\n\n".join(alerts)
+        message = "📈 ALERTAS MACD — 1H / CIERRE DE VELA\\n\\n" + "\\n\\n".join(alerts)
         for chunk in split_message(message):
             send_telegram(chunk)
         print(f"Telegram: enviadas {len(alerts)} señal(es).")
     else:
-        print("No hay cruces confirmados nuevos.")
+        print("No hay cruces nuevos al cierre de vela.")
 
-    new_pending["_last_sent"] = last_sent
-    save_pending_state(new_pending)
+    # Keep the existing state file and sent-signal history; discard obsolete pending confirmations.
+    save_pending_state({"_last_sent": last_sent})
 
     if errors:
         print("Algunos símbolos no se pudieron consultar: " + " | ".join(errors), file=sys.stderr)
