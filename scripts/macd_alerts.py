@@ -350,7 +350,7 @@ def main() -> int:
 
     # Send first. If Telegram fails, last_sent is not saved and the alert is retried.
     if alerts:
-        message = "📈 ALERTAS MACD — 1H / CIERRE DE VELA\\n\\n" + "\\n\\n".join(alerts)
+        message = "📈 ALERTAS MACD — 1H / CIERRE DE VELA\n\n" + "\n\n".join(alerts)
         for chunk in split_message(message):
             send_telegram(chunk)
         print(f"Telegram: enviadas {len(alerts)} señal(es).")
