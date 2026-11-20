@@ -1,3 +1,5 @@
-symbol,signals_total,signals_1h,win_rate_1h_pct,avg_return_1h_pct,signals_4h,win_rate_4h_pct,avg_return_4h_pct,signals_24h,win_rate_24h_pct,avg_return_24h_pct
-ALL,1,0,,,0,,,0,,
-XOM,1,0,,,0,,,0,,
+symbol,direction,signals_total,completed_1h,win_rate_1h_net_pct,avg_return_1h_gross_pct,avg_return_1h_net_pct,profit_factor_1h,max_drawdown_1h_net_pct,completed_4h,win_rate_4h_net_pct,avg_return_4h_gross_pct,avg_return_4h_net_pct,profit_factor_4h,max_drawdown_4h_net_pct,completed_24h,win_rate_24h_net_pct,avg_return_24h_gross_pct,avg_return_24h_net_pct,profit_factor_24h,max_drawdown_24h_net_pct
+ALL,ALL,1,0,,,,,,0,,,,,,0,,,,,
+ALL,BUY,1,0,,,,,,0,,,,,,0,,,,,
+XOM,ALL,1,0,,,,,,0,,,,,,0,,,,,
+XOM,BUY,1,0,,,,,,0,,,,,,0,,,,,

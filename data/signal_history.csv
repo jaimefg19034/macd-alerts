@@ -1,2 +1,2 @@
-symbol,direction,candle_timestamp,candle_time_madrid,entry_price,rsi14,macd,signal_line,return_1h_pct,return_1h_price,return_1h_recorded_at,return_1h_elapsed_hours,return_4h_pct,return_4h_price,return_4h_recorded_at,return_4h_elapsed_hours,return_24h_pct,return_24h_price,return_24h_recorded_at,return_24h_elapsed_hours
-XOM,BUY,1795188600,2026-11-20 16:30,160.6499938965,36.7246,-1.9256718596,-2.0184095253,,,,,,,,,,,,
+symbol,direction,candle_timestamp,candle_time_madrid,entry_price,rsi14,macd,signal_line,return_1h_pct,return_1h_price,return_1h_recorded_at,return_1h_elapsed_hours,return_4h_pct,return_4h_price,return_4h_recorded_at,return_4h_elapsed_hours,return_24h_pct,return_24h_price,return_24h_recorded_at,return_24h_elapsed_hours,net_return_1h_pct,net_return_4h_pct,net_return_24h_pct
+XOM,BUY,1795188600,2026-11-20 16:30,160.6499938965,36.7246,-1.9256718596,-2.0184095253,,,,,,,,,,,,,,,
