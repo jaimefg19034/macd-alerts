@@ -293,7 +293,7 @@ def save_signal_stats(history: list[dict]) -> None:
         groups[("ALL", "ALL")].append(row)
 
     fields = [
-        "symbol", "direction", "signals_total",
+        "symbol", "direction", "signals_total", "round_trip_cost_pct",
         *[
             field
             for horizon in SIGNAL_HORIZONS
@@ -365,6 +365,7 @@ def save_signal_stats(history: list[dict]) -> None:
                 "symbol": symbol,
                 "direction": direction,
                 "signals_total": len(rows),
+                "round_trip_cost_pct": f"{ROUND_TRIP_COST_PCT:.2f}",
             }
             for horizon in SIGNAL_HORIZONS:
                 result.update(summarize(rows, horizon))
