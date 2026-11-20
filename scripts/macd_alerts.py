@@ -171,6 +171,153 @@ def save_pending_state(state: dict) -> None:
     os.replace(temporary_file, PENDING_STATE_FILE)
 
 
+SIGNAL_HISTORY_FILE = "data/signal_history.csv"
+SIGNAL_STATS_FILE = "data/signal_stats.csv"
+SIGNAL_HORIZONS = (1, 4, 24)
+SIGNAL_HISTORY_FIELDS = [
+    "symbol", "direction", "candle_timestamp", "candle_time_madrid",
+    "entry_price", "rsi14", "macd", "signal_line",
+    "return_1h_pct", "return_1h_price", "return_1h_recorded_at", "return_1h_elapsed_hours",
+    "return_4h_pct", "return_4h_price", "return_4h_recorded_at", "return_4h_elapsed_hours",
+    "return_24h_pct", "return_24h_price", "return_24h_recorded_at", "return_24h_elapsed_hours",
+]
+
+
+def load_signal_history() -> list[dict]:
+    import csv
+    try:
+        with open(SIGNAL_HISTORY_FILE, "r", encoding="utf-8", newline="") as file:
+            return list(csv.DictReader(file))
+    except FileNotFoundError:
+        return []
+
+
+def save_signal_history(history: list[dict]) -> None:
+    import csv
+    os.makedirs(os.path.dirname(SIGNAL_HISTORY_FILE), exist_ok=True)
+    temporary_file = SIGNAL_HISTORY_FILE + ".tmp"
+    with open(temporary_file, "w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=SIGNAL_HISTORY_FIELDS)
+        writer.writeheader()
+        writer.writerows(history)
+    os.replace(temporary_file, SIGNAL_HISTORY_FILE)
+
+
+def record_signal(history: list[dict], symbol: str, direction: str,
+                  candle_timestamp: int, entry_price: float, rsi_value: float,
+                  macd_value: float, signal_value: float) -> None:
+    candle_time = datetime.fromtimestamp(
+        candle_timestamp, tz=timezone.utc
+    ).astimezone(MADRID)
+    history.append({
+        "symbol": symbol,
+        "direction": direction,
+        "candle_timestamp": str(candle_timestamp),
+        "candle_time_madrid": candle_time.strftime("%Y-%m-%d %H:%M"),
+        "entry_price": f"{entry_price:.10f}",
+        "rsi14": f"{rsi_value:.4f}",
+        "macd": f"{macd_value:.10f}",
+        "signal_line": f"{signal_value:.10f}",
+        **{
+            field: ""
+            for horizon in SIGNAL_HORIZONS
+            for field in (
+                f"return_{horizon}h_pct", f"return_{horizon}h_price",
+                f"return_{horizon}h_recorded_at", f"return_{horizon}h_elapsed_hours"
+            )
+        },
+    })
+
+
+def update_signal_outcomes(history: list[dict], symbol: str,
+                           bars: list[tuple[int, float]]) -> None:
+    """Fill 1h/4h/24h outcomes using the first completed candle at/after each horizon."""
+    if not bars:
+        return
+    completed = [(timestamp + CANDLE_SECONDS, close) for timestamp, close in bars]
+    for row in history:
+        if row.get("symbol") != symbol:
+            continue
+        try:
+            entry_close_time = int(row["candle_timestamp"]) + CANDLE_SECONDS
+            entry_price = float(row["entry_price"])
+            direction = row["direction"]
+        except (KeyError, TypeError, ValueError):
+            continue
+        if entry_price <= 0:
+            continue
+
+        for horizon in SIGNAL_HORIZONS:
+            result_field = f"return_{horizon}h_pct"
+            if row.get(result_field):
+                continue
+            target_time = entry_close_time + horizon * 3600
+            future = next(
+                ((close_time, price) for close_time, price in completed
+                 if close_time >= target_time),
+                None,
+            )
+            if future is None:
+                continue
+            close_time, future_price = future
+            if direction == "BUY":
+                performance = (future_price / entry_price - 1.0) * 100.0
+            else:
+                performance = (entry_price / future_price - 1.0) * 100.0
+            elapsed_hours = (close_time - entry_close_time) / 3600.0
+            recorded = datetime.fromtimestamp(
+                close_time, tz=timezone.utc
+            ).astimezone(MADRID)
+            row[result_field] = f"{performance:.6f}"
+            row[f"return_{horizon}h_price"] = f"{future_price:.10f}"
+            row[f"return_{horizon}h_recorded_at"] = recorded.strftime("%Y-%m-%d %H:%M")
+            row[f"return_{horizon}h_elapsed_hours"] = f"{elapsed_hours:.2f}"
+
+
+def save_signal_stats(history: list[dict]) -> None:
+    import csv
+    from collections import defaultdict
+
+    groups = defaultdict(list)
+    for row in history:
+        groups[row.get("symbol", "")].append(row)
+    groups["ALL"].extend(history)
+
+    fields = [
+        "symbol", "signals_total",
+        "signals_1h", "win_rate_1h_pct", "avg_return_1h_pct",
+        "signals_4h", "win_rate_4h_pct", "avg_return_4h_pct",
+        "signals_24h", "win_rate_24h_pct", "avg_return_24h_pct",
+    ]
+    os.makedirs(os.path.dirname(SIGNAL_STATS_FILE), exist_ok=True)
+    temporary_file = SIGNAL_STATS_FILE + ".tmp"
+    with open(temporary_file, "w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fields)
+        writer.writeheader()
+        for symbol in sorted(groups):
+            rows = groups[symbol]
+            result = {"symbol": symbol, "signals_total": len(rows)}
+            for horizon in SIGNAL_HORIZONS:
+                values = []
+                for row in rows:
+                    raw = row.get(f"return_{horizon}h_pct", "")
+                    if raw:
+                        try:
+                            values.append(float(raw))
+                        except ValueError:
+                            pass
+                result[f"signals_{horizon}h"] = len(values)
+                result[f"win_rate_{horizon}h_pct"] = (
+                    f"{sum(value > 0 for value in values) / len(values) * 100:.2f}"
+                    if values else ""
+                )
+                result[f"avg_return_{horizon}h_pct"] = (
+                    f"{sum(values) / len(values):.4f}" if values else ""
+                )
+            writer.writerow(result)
+    os.replace(temporary_file, SIGNAL_STATS_FILE)
+
+
 def send_telegram(message: str) -> None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
@@ -333,6 +480,7 @@ def main() -> int:
     last_sent = dict(old_state.get("_last_sent", {}))
     alerts: list[str] = []
     errors: list[str] = []
+    signal_history = load_signal_history()
 
     for symbol in TICKERS:
         if not market_is_open(symbol):
@@ -344,6 +492,7 @@ def main() -> int:
             closes = [close for _, close in bars]
             macd, signal = calculate_macd(closes)
             rsi = calculate_rsi(closes, 14)
+            update_signal_outcomes(signal_history, symbol, bars)
 
             if len(timestamps) < 2 or macd[-2] is None or signal[-2] is None:
                 print(f"{symbol}: histórico insuficiente para calcular el cruce.")
@@ -378,6 +527,10 @@ def main() -> int:
                         symbol, direction_text, candle_timestamp, closes[-1],
                         float(macd[-1]), float(signal[-1]), float(rsi[-1])
                     ))
+                    record_signal(
+                        signal_history, symbol, direction, candle_timestamp,
+                        closes[-1], float(rsi[-1]), float(macd[-1]), float(signal[-1])
+                    )
                     last_sent[symbol] = alert_key
                     print(f"{symbol}: cruce {direction} confirmado al cierre de la vela 1H.")
                 else:
@@ -400,6 +553,9 @@ def main() -> int:
 
     # Keep the existing state file and sent-signal history; discard obsolete pending confirmations.
     save_pending_state({"_last_sent": last_sent})
+    save_signal_history(signal_history)
+    save_signal_stats(signal_history)
+    print(f"Historial de señales: {len(signal_history)} señal(es) registradas.")
 
     if errors:
         print("Algunos símbolos no se pudieron consultar: " + " | ".join(errors), file=sys.stderr)
