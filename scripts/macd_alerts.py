@@ -174,12 +174,15 @@ def save_pending_state(state: dict) -> None:
 SIGNAL_HISTORY_FILE = "data/signal_history.csv"
 SIGNAL_STATS_FILE = "data/signal_stats.csv"
 SIGNAL_HORIZONS = (1, 4, 24)
+# Estimated total entry+exit costs, in percentage points. Adjust to broker/spread.
+ROUND_TRIP_COST_PCT = 0.10
 SIGNAL_HISTORY_FIELDS = [
     "symbol", "direction", "candle_timestamp", "candle_time_madrid",
     "entry_price", "rsi14", "macd", "signal_line",
     "return_1h_pct", "return_1h_price", "return_1h_recorded_at", "return_1h_elapsed_hours",
     "return_4h_pct", "return_4h_price", "return_4h_recorded_at", "return_4h_elapsed_hours",
     "return_24h_pct", "return_24h_price", "return_24h_recorded_at", "return_24h_elapsed_hours",
+    "net_return_1h_pct", "net_return_4h_pct", "net_return_24h_pct",
 ]
 
 
@@ -223,7 +226,8 @@ def record_signal(history: list[dict], symbol: str, direction: str,
             for horizon in SIGNAL_HORIZONS
             for field in (
                 f"return_{horizon}h_pct", f"return_{horizon}h_price",
-                f"return_{horizon}h_recorded_at", f"return_{horizon}h_elapsed_hours"
+                f"return_{horizon}h_recorded_at", f"return_{horizon}h_elapsed_hours",
+                f"net_return_{horizon}h_pct"
             )
         },
     })
@@ -269,6 +273,7 @@ def update_signal_outcomes(history: list[dict], symbol: str,
                 close_time, tz=timezone.utc
             ).astimezone(MADRID)
             row[result_field] = f"{performance:.6f}"
+            row[f"net_return_{horizon}h_pct"] = f"{performance - ROUND_TRIP_COST_PCT:.6f}"
             row[f"return_{horizon}h_price"] = f"{future_price:.10f}"
             row[f"return_{horizon}h_recorded_at"] = recorded.strftime("%Y-%m-%d %H:%M")
             row[f"return_{horizon}h_elapsed_hours"] = f"{elapsed_hours:.2f}"
@@ -280,40 +285,89 @@ def save_signal_stats(history: list[dict]) -> None:
 
     groups = defaultdict(list)
     for row in history:
-        groups[row.get("symbol", "")].append(row)
-    groups["ALL"].extend(history)
+        symbol = row.get("symbol", "")
+        direction = row.get("direction", "")
+        groups[(symbol, direction)].append(row)
+        groups[(symbol, "ALL")].append(row)
+        groups[("ALL", direction)].append(row)
+        groups[("ALL", "ALL")].append(row)
 
     fields = [
-        "symbol", "signals_total",
-        "signals_1h", "win_rate_1h_pct", "avg_return_1h_pct",
-        "signals_4h", "win_rate_4h_pct", "avg_return_4h_pct",
-        "signals_24h", "win_rate_24h_pct", "avg_return_24h_pct",
+        "symbol", "direction", "signals_total",
+        *[
+            field
+            for horizon in SIGNAL_HORIZONS
+            for field in (
+                f"completed_{horizon}h", f"win_rate_{horizon}h_net_pct",
+                f"avg_return_{horizon}h_gross_pct", f"avg_return_{horizon}h_net_pct",
+                f"profit_factor_{horizon}h", f"max_drawdown_{horizon}h_net_pct",
+            )
+        ],
     ]
+
+    def summarize(rows: list[dict], horizon: int) -> dict:
+        values = []
+        for row in rows:
+            raw = row.get(f"net_return_{horizon}h_pct", "")
+            if raw == "":
+                continue
+            try:
+                values.append((int(row.get("candle_timestamp", "0")), float(raw),
+                               float(row.get(f"return_{horizon}h_pct", "0") or 0)))
+            except (TypeError, ValueError):
+                continue
+        values.sort(key=lambda item: item[0])
+        net = [item[1] for item in values]
+        gross = [item[2] for item in values]
+        wins = [value for value in net if value > 0]
+        losses = [value for value in net if value < 0]
+        profit_factor = (
+            sum(wins) / abs(sum(losses)) if losses
+            else (float("inf") if wins else 0.0)
+        )
+
+        # Compounded equity curve, with each signal treated as one equal-sized trade.
+        equity = peak = 1.0
+        max_drawdown = 0.0
+        for value in net:
+            equity *= max(0.0, 1.0 + value / 100.0)
+            peak = max(peak, equity)
+            if peak:
+                max_drawdown = max(max_drawdown, (peak - equity) / peak * 100.0)
+
+        return {
+            f"completed_{horizon}h": len(net),
+            f"win_rate_{horizon}h_net_pct": (
+                f"{len(wins) / len(net) * 100:.2f}" if net else ""
+            ),
+            f"avg_return_{horizon}h_gross_pct": (
+                f"{sum(gross) / len(gross):.4f}" if gross else ""
+            ),
+            f"avg_return_{horizon}h_net_pct": (
+                f"{sum(net) / len(net):.4f}" if net else ""
+            ),
+            f"profit_factor_{horizon}h": (
+                "INF" if profit_factor == float("inf")
+                else f"{profit_factor:.3f}" if net else ""
+            ),
+            f"max_drawdown_{horizon}h_net_pct": (
+                f"{max_drawdown:.2f}" if net else ""
+            ),
+        }
+
     os.makedirs(os.path.dirname(SIGNAL_STATS_FILE), exist_ok=True)
     temporary_file = SIGNAL_STATS_FILE + ".tmp"
     with open(temporary_file, "w", encoding="utf-8", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=fields)
         writer.writeheader()
-        for symbol in sorted(groups):
-            rows = groups[symbol]
-            result = {"symbol": symbol, "signals_total": len(rows)}
+        for (symbol, direction), rows in sorted(groups.items()):
+            result = {
+                "symbol": symbol,
+                "direction": direction,
+                "signals_total": len(rows),
+            }
             for horizon in SIGNAL_HORIZONS:
-                values = []
-                for row in rows:
-                    raw = row.get(f"return_{horizon}h_pct", "")
-                    if raw:
-                        try:
-                            values.append(float(raw))
-                        except ValueError:
-                            pass
-                result[f"signals_{horizon}h"] = len(values)
-                result[f"win_rate_{horizon}h_pct"] = (
-                    f"{sum(value > 0 for value in values) / len(values) * 100:.2f}"
-                    if values else ""
-                )
-                result[f"avg_return_{horizon}h_pct"] = (
-                    f"{sum(values) / len(values):.4f}" if values else ""
-                )
+                result.update(summarize(rows, horizon))
             writer.writerow(result)
     os.replace(temporary_file, SIGNAL_STATS_FILE)
 
@@ -555,7 +609,10 @@ def main() -> int:
     save_pending_state({"_last_sent": last_sent})
     save_signal_history(signal_history)
     save_signal_stats(signal_history)
-    print(f"Historial de señales: {len(signal_history)} señal(es) registradas.")
+    print(
+        f"Historial: {len(signal_history)} señales; "
+        f"coste estimado ida y vuelta: {ROUND_TRIP_COST_PCT:.2f}%."
+    )
 
     if errors:
         print("Algunos símbolos no se pudieron consultar: " + " | ".join(errors), file=sys.stderr)
