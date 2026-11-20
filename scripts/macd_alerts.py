@@ -22,12 +22,22 @@ TICKERS = (
     "SAN.MC",       # Banco Santander, cotizado en Madrid
     "EURUSD=X",     # EUR/USD
     "EURGBP=X",     # EUR/GBP
+    "AMD",          # Advanced Micro Devices
+    "AVGO",         # Broadcom
+    "MU",           # Micron Technology
+    "JPM",          # JPMorgan Chase
+    "XOM",          # Exxon Mobil
 )
 SYMBOL_INFO = {
     "SAN.MC": ("Banco Santander", "EUR", 3),
     "EURUSD=X": ("EUR/USD", "USD", 5),
     "EURGBP=X": ("EUR/GBP", "GBP", 5),
     "OCGN": ("Ocugen", "USD", 4),
+    "AMD": ("Advanced Micro Devices", "USD", 2),
+    "AVGO": ("Broadcom", "USD", 2),
+    "MU": ("Micron Technology", "USD", 2),
+    "JPM": ("JPMorgan Chase", "USD", 2),
+    "XOM": ("Exxon Mobil", "USD", 2),
 }
 PENDING_STATE_FILE = "data/pending_crosses.json"
 CANDLE_SECONDS = 60 * 60
