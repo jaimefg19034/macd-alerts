@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ten-minute confirmed intrabar one-hour MACD crossover alerts for shares and FX pairs.
+"""One-hour candle-close MACD crossover alerts for shares and FX pairs.
 
 Data source: Yahoo Finance chart endpoint (unofficial; may be delayed/rate-limited).
 Notifications: Telegram Bot API.
@@ -111,6 +111,34 @@ def calculate_macd(closes: list[float]) -> tuple[list[float | None], list[float 
     return macd, signal
 
 
+def calculate_rsi(closes: list[float], period: int = 14) -> list[float | None]:
+    """TradingView-style RSI using Wilder smoothing, calculated from closing prices."""
+    if len(closes) <= period:
+        raise ValueError("No hay suficientes cierres para calcular RSI")
+
+    changes = [closes[index] - closes[index - 1] for index in range(1, len(closes))]
+    gains = [max(change, 0.0) for change in changes]
+    losses = [max(-change, 0.0) for change in changes]
+
+    output: list[float | None] = [None] * period
+    average_gain = sum(gains[:period]) / period
+    average_loss = sum(losses[:period]) / period
+
+    def value_from_averages(gain: float, loss: float) -> float:
+        if loss == 0:
+            return 50.0 if gain == 0 else 100.0
+        relative_strength = gain / loss
+        return 100.0 - (100.0 / (1.0 + relative_strength))
+
+    output.append(value_from_averages(average_gain, average_loss))
+    for index in range(period, len(changes)):
+        average_gain = ((average_gain * (period - 1)) + gains[index]) / period
+        average_loss = ((average_loss * (period - 1)) + losses[index]) / period
+        output.append(value_from_averages(average_gain, average_loss))
+
+    return output
+
+
 def load_pending_state() -> dict:
     try:
         with open(PENDING_STATE_FILE, "r", encoding="utf-8") as file:
@@ -182,12 +210,14 @@ def split_message(message: str, limit: int = 3500) -> list[str]:
 
 
 def format_alert(symbol: str, direction: str, candle_timestamp: int,
-                 close_price: float, macd_value: float, signal_value: float) -> str:
+                 close_price: float, macd_value: float, signal_value: float,
+                 rsi_value: float) -> str:
     candle_start = datetime.fromtimestamp(candle_timestamp, tz=timezone.utc).astimezone(MADRID)
     display_name, currency, precision = SYMBOL_INFO.get(symbol, (symbol, "USD", 2))
     return (
         f"{direction} — {display_name}\n"
         f"MACD: {macd_value:.4f} | Señal: {signal_value:.4f}\n"
+        f"RSI 14 (close): {rsi_value:.2f}\n"
         f"Vela 1H iniciada: {candle_start:%d/%m/%Y %H:%M} (hora de Madrid)\n"
         f"Precio al confirmar: {close_price:.{precision}f} {currency}\n"
         f"Confirmación: cierre de vela 1H"
@@ -303,6 +333,7 @@ def main() -> int:
             timestamps = [timestamp for timestamp, _ in bars]
             closes = [close for _, close in bars]
             macd, signal = calculate_macd(closes)
+            rsi = calculate_rsi(closes, 14)
 
             if len(timestamps) < 2 or macd[-2] is None or signal[-2] is None:
                 print(f"{symbol}: histórico insuficiente para calcular el cruce.")
@@ -335,7 +366,7 @@ def main() -> int:
                     direction_text = "🟢 COMPRA" if direction == "BUY" else "🔴 VENTA"
                     alerts.append(format_alert(
                         symbol, direction_text, candle_timestamp, closes[-1],
-                        float(macd[-1]), float(signal[-1])
+                        float(macd[-1]), float(signal[-1]), float(rsi[-1])
                     ))
                     last_sent[symbol] = alert_key
                     print(f"{symbol}: cruce {direction} confirmado al cierre de la vela 1H.")
