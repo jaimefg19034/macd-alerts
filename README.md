@@ -85,6 +85,6 @@ Después, la comprobación queda programada automáticamente cada cinco minutos.
 
 ## Investigación cuantitativa
 
-Consulta [docs/PHASE_1_AUDIT.md](docs/PHASE_1_AUDIT.md) para ver la auditoría de datos, las convenciones de evaluación, las limitaciones conocidas y el plan para el backtester y el paper trading.
+Consulta [docs/PHASE_1_AUDIT.md](docs/PHASE_1_AUDIT.md) para la auditoría de datos y [docs/PHASE_2_BACKTEST.md](docs/PHASE_2_BACKTEST.md) para el método del backtester inicial. El backtester se ejecuta por separado y genera un informe descargable desde GitHub Actions.
 
 **Importante:** las estadísticas actuales son preliminares y no demuestran rentabilidad. El coste ida y vuelta del 0,10% es una hipótesis fija, no una cotización real de comisiones y spread.
