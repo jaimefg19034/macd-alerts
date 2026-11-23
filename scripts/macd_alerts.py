@@ -52,11 +52,11 @@ def get_json(url: str) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
-def get_hourly_bars(symbol: str) -> list[dict]:
+def get_hourly_bars(symbol: str, lookback_days: int = LOOKBACK_DAYS) -> list[dict]:
     """Return fully closed one-hour OHLCV candles with UTC start timestamps."""
     now = int(time.time())
     query = urllib.parse.urlencode({
-        "period1": now - LOOKBACK_DAYS * 24 * 60 * 60,
+        "period1": now - lookback_days * 24 * 60 * 60,
         "period2": now,
         "interval": "60m",
         "includePrePost": "false",
