@@ -159,11 +159,12 @@ def main() -> int:
         "development_candidates": dev_candidates,
         "selected_configuration": {"stop_atr": selected["stop_atr"], "target_atr": selected["target_atr"]},
         "used_default_fallback": fallback,
+        "research_target": {"oos_portfolio_mtm_return_pct": 40.0, "primary_cost_pct": 0.20, "annualized": False, "note": "Aspirational research threshold, not a guarantee or a parameter-selection objective."},
         "oos": {}, "errors": errors,
         "limitations": [
             "The development period is used for parameter selection and is not an independent performance estimate.",
             "The four OOS folds are not used to select or change ATR multiples.",
-            "The EMA200+ADX filter was chosen after reviewing a prior OOS comparison on this same snapshot; therefore this is not a fully independent validation of the combined strategy."
+            "The EMA200+ADX filter was chosen after reviewing a prior OOS comparison on this same snapshot; therefore this is not a fully independent validation of the combined strategy.",
             "The candidate grid and selection score are research choices and may still overfit the development sample.",
             "Costs are hypothetical round-trip scenarios, not verified broker quotes.",
             "Each fold is independently simulated and open positions are marked at its final close.",
@@ -171,7 +172,7 @@ def main() -> int:
         ]
     }
     for cost in args.costs:
-        pooled, fold_report = [], {}
+        pooled, fold_report, by_symbol = [], {}, {}
         for fold_no in range(1, 5):
             fold_trades = []
             for symbol, bars in data.items():
@@ -190,7 +191,15 @@ def main() -> int:
                 "statistics": summarize(fold_trades),
                 "portfolio": simulate_portfolio(fold_trades, bars_by_symbol=data),
             }
+        for symbol in data:
+            symbol_trades = [trade for trade in pooled if trade["symbol"] == symbol]
+            by_symbol[symbol] = {
+                "statistics": summarize(symbol_trades),
+                "portfolio": simulate_portfolio(symbol_trades, bars_by_symbol={symbol: data[symbol]}) if symbol in USD_EQUITY_SYMBOLS else None,
+                "folds": {str(fold_no): summarize([trade for trade in symbol_trades if trade.get("walk_forward_fold") == fold_no]) for fold_no in range(1, 5)},
+            }
         output["oos"][f"cost_{cost:.2f}"] = {
+            "by_symbol": by_symbol,
             "statistics": summarize(pooled),
             "portfolio": simulate_portfolio(pooled, bars_by_symbol=data),
             "folds": fold_report,
