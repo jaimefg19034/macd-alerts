@@ -12,6 +12,7 @@ on:
       - "scripts/portfolio_sim.py"
       - "scripts/signal_quality.py"
       - "scripts/walk_forward.py"
+      - "scripts/data_snapshot.py"
       - "scripts/strategy_filters.py"
       - "tests/**"
   workflow_dispatch:
@@ -49,25 +50,29 @@ jobs:
       - name: Run backtester tests
         run: python -m unittest discover -s tests -v
 
+      - name: Download one common OHLCV snapshot
+        run: python scripts/data_snapshot.py --lookback-days 700 --output-dir reports/data_snapshot
+
       - name: Run baseline and filtered backtests
         env:
           BACKTEST_COST_PCT: ${{ inputs.cost_pct || '0.10' }}
           FILTER_MODE: ${{ inputs.filter_mode || 'ema_adx_rsi' }}
         run: |
-          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode macd --output-dir reports/backtest/macd_only
-          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --output-dir reports/backtest/fixed_sl_tp
-          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/fixed_sl_tp_$FILTER_MODE"
-          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --output-dir reports/backtest/atr_1_5x_3x
-          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE"
+          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode macd --data-dir reports/data_snapshot --lookback-days 700 --output-dir reports/backtest/macd_only
+          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --data-dir reports/data_snapshot --lookback-days 700 --output-dir reports/backtest/fixed_sl_tp
+          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --data-dir reports/data_snapshot --lookback-days 700 --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/fixed_sl_tp_$FILTER_MODE"
+          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --data-dir reports/data_snapshot --lookback-days 700 --output-dir reports/backtest/atr_1_5x_3x
+          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --data-dir reports/data_snapshot --lookback-days 700 --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE"
           python scripts/backtest.py --cost-pct 0.20 --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE_cost_0_20"
           python scripts/backtest.py --cost-pct 0.30 --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE_cost_0_30"
-          python scripts/walk_forward.py --filter-mode "$FILTER_MODE" --costs 0.10 0.20 0.30 --output reports/walk_forward/summary.json
+          python scripts/walk_forward.py --filter-mode "$FILTER_MODE" --costs 0.10 0.20 0.30 --data-dir reports/data_snapshot --output reports/walk_forward/summary.json
 
       - name: Upload backtest report
         uses: actions/upload-artifact@v4
         with:
           name: macd-backtest-report
           path: |
+            reports/data_snapshot/
             reports/backtest/
             reports/walk_forward/
           if-no-files-found: error
