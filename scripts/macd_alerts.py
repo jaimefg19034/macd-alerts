@@ -233,9 +233,15 @@ def record_signal(history: list[dict], symbol: str, direction: str,
     })
 
 
+MAX_HORIZON_DELAY_SECONDS = 60 * 60  # allow at most one missing hourly bar
+
 def update_signal_outcomes(history: list[dict], symbol: str,
                            bars: list[tuple[int, float]]) -> None:
-    """Fill 1h/4h/24h outcomes using the first completed candle at/after each horizon."""
+    """Record clock-time outcomes only when a close exists near the requested horizon.
+
+    A 24h result measured 53h or 71h later is not a valid 24h observation.
+    If the market is closed or data is missing around the target, leave it blank.
+    """
     if not bars:
         return
     completed = [(timestamp + CANDLE_SECONDS, close) for timestamp, close in bars]
@@ -264,6 +270,10 @@ def update_signal_outcomes(history: list[dict], symbol: str,
             if future is None:
                 continue
             close_time, future_price = future
+            # Do not silently relabel a much later post-weekend/post-holiday price
+            # as a 1h, 4h or 24h result. Missing is more honest than mismeasured.
+            if close_time > target_time + MAX_HORIZON_DELAY_SECONDS:
+                continue
             if direction == "BUY":
                 performance = (future_price / entry_price - 1.0) * 100.0
             else:
