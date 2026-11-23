@@ -203,7 +203,10 @@ def main() -> int:
     print(json.dumps({
         "selected": selected, "excluded": excluded, "fallback": fallback,
         "full_universe": {k: v["portfolio"]["mtm_return_pct"] for k, v in output["full_universe_oos"].items()},
-        "selected_universe": {k: v["portfolio"]["mtm_return_pct"] for k, v in output["selected_universe_oos"].items()},
+        "consistency_selected_universe": {k: v["portfolio"]["mtm_return_pct"] for k, v in output["consistency_selected_universe_oos"].items()},
+        "profit_prioritized_symbols": best_selected,
+        "profit_prioritized_development_selection": best_candidate,
+        "profit_prioritized_oos": {k: v["portfolio"]["mtm_return_pct"] for k, v in output["profit_prioritized_selected_universe_oos"].items()},
         "errors": errors,
     }, indent=2))
     return 0
