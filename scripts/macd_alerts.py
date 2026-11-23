@@ -480,12 +480,12 @@ def format_alert(symbol: str, direction: str, candle_timestamp: int,
         "Riesgos: " + (", ".join(quality["risks"]) if quality["risks"] else "sin alertas técnicas destacables"),
     ]
     return (
-        f"{direction} — {display_name}\\n"
-        + "\\n".join(quality_lines) + "\\n"
-        f"MACD: {macd_value:.4f} | Señal: {signal_value:.4f}\\n"
-        f"RSI 14 (close): {rsi_value:.2f}\\n"
-        f"Vela 1H iniciada: {candle_start:%d/%m/%Y %H:%M} (hora de Madrid)\\n"
-        f"Precio al confirmar: {close_price:.{precision}f} {currency}\\n"
+        f"{direction} — {display_name}\n"
+        + "\n".join(quality_lines) + "\n"
+        f"MACD: {macd_value:.4f} | Señal: {signal_value:.4f}\n"
+        f"RSI 14 (close): {rsi_value:.2f}\n"
+        f"Vela 1H iniciada: {candle_start:%d/%m/%Y %H:%M} (hora de Madrid)\n"
+        f"Precio al confirmar: {close_price:.{precision}f} {currency}\n"
         f"Confirmación: cierre de vela 1H"
     )
 
