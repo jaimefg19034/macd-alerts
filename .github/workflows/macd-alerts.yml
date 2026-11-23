@@ -10,6 +10,7 @@ on:
     paths:
       - ".github/workflows/macd-alerts.yml"
       - "scripts/macd_alerts.py"
+      - "scripts/signal_quality.py"
       - "tests/**"
 
 permissions:
