@@ -17,6 +17,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 import macd_alerts  # noqa: E402
 from strategy_filters import FILTER_MODES, filter_events  # noqa: E402
 from atr_exits import atr_levels, calculate_atr  # noqa: E402
+from portfolio_sim import simulate_portfolio  # noqa: E402
 
 STRATEGY_ID = macd_alerts.STRATEGY_ID
 STRATEGY_VERSION = macd_alerts.STRATEGY_VERSION
@@ -195,6 +196,7 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mo
         "cost_assumption_round_trip_pct": cost_pct,
         "symbols": per_symbol,
         "pooled_trade_statistics": summarize(all_trades),
+        "portfolio_simulation": (simulate_portfolio(all_trades) if risk_mode in {"fixed", "atr"} else None),
         "errors": errors,
         "limitations": [
             "Yahoo Finance public chart endpoint is unofficial and may be delayed, incomplete or rate-limited.",
