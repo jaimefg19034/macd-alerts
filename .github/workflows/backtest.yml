@@ -9,6 +9,7 @@ on:
       - "scripts/backtest.py"
       - "scripts/risk_management.py"
       - "scripts/atr_exits.py"
+      - "scripts/portfolio_sim.py"
       - "scripts/strategy_filters.py"
       - "tests/**"
   workflow_dispatch:
