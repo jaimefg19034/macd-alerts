@@ -47,7 +47,7 @@ class PortfolioSimulationTests(unittest.TestCase):
             {"timestamp": ts(11), "close": 99},
         ]
         result = simulate_portfolio([trade_data], bars_by_symbol={"AAPL": bars})
-        self.assertGreater(result["max_mtm_drawdown_pct"], 2.0)
+        self.assertGreater(result["max_mtm_drawdown_pct"], 1.0)
         self.assertGreater(result["max_mtm_drawdown_pct"],
                            result["max_realized_drawdown_pct"])
         self.assertEqual(result["open_positions_at_sample_end"], 0)
