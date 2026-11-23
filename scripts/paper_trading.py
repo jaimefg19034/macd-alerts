@@ -34,7 +34,7 @@ def iso_utc(timestamp: int) -> str:
 
 
 def empty_state() -> dict:
-    return {"state_version": 1, "last_processed": {}, "positions": {}}
+    return {"state_version": 2, "last_processed": {}, "last_bar_processed": {}, "positions": {}}
 
 
 def load_state() -> dict:
@@ -45,7 +45,9 @@ def load_state() -> dict:
             raise ValueError("se esperaba un objeto JSON")
         state.setdefault("last_processed", {})
         state.setdefault("positions", {})
-        state.setdefault("state_version", 1)
+        state.setdefault("state_version", 2)
+        state.setdefault("last_bar_processed", {})
+        state["state_version"] = 2
         return state
     except FileNotFoundError:
         return empty_state()
