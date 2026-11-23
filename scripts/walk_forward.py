@@ -131,7 +131,7 @@ def main() -> int:
             "Yahoo Finance hourly history may be shorter than requested, incomplete or rate-limited.",
             "Costs are scenarios, not verified broker execution costs.",
             "Portfolio aggregation includes only USD-denominated US equities; FX and SAN.MC are excluded.",
-            "Portfolio drawdown is realized only and excludes mark-to-market drawdown.",
+            "Portfolio drawdown uses hourly close-to-close mark-to-market; intrabar drawdown is not captured.",
             "Short trades, borrow, financing, margin and gap risk remain simplified."
         ]
     }
