@@ -48,7 +48,7 @@ def simulate_trades(symbol: str, bars: list[dict],
                     events: list[tuple[int, str]],
                     cost_pct: float = DEFAULT_COST_PCT,
                     risk_mode: str = "macd") -> list[dict]:
-    """Simulate MACD-only or fixed SL/TP exits using completed OHLC bars.
+    """Simulate MACD-only, fixed SL/TP or ATR exits using completed OHLC bars.
 
     Entry/reversal fills occur at the next bar open. Stops/targets are checked
     only on bars after entry. If both are touched in one bar, stop wins.
@@ -58,7 +58,7 @@ def simulate_trades(symbol: str, bars: list[dict],
     if cost_pct < 0:
         raise ValueError("cost_pct no puede ser negativo")
     if risk_mode not in {"macd", "fixed", "atr"}:
-        raise ValueError("risk_mode debe ser 'macd' o 'fixed'")
+        raise ValueError("risk_mode debe ser macd, fixed o atr")
     event_by_execution = {index + 1: direction for index, direction in events
                           if index + 1 < len(bars)}
     trades: list[dict] = []
@@ -200,7 +200,7 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mo
             "Yahoo Finance public chart endpoint is unofficial and may be delayed, incomplete or rate-limited.",
             "Intraday history availability is limited; this run uses the bars returned by the provider, not a multi-year institutional dataset.",
             "A flat cost assumption is not a verified broker spread, commission or slippage quote.",
-            "Fixed SL/TP are price distances: equities 1.5%/3.0%; FX 0.25%/0.50%. Same-bar stop/target ambiguity assumes stop first.",
+            "Fixed SL/TP use equity 1.5%/3.0% and FX 0.25%/0.50%; ATR mode uses 1.5x/3x ATR. Same-bar stop/target ambiguity assumes stop first.",
             "SELL trades are theoretical short exposures; borrow costs, locate availability and margin are not modelled.",
             "Pooled statistics are not a portfolio equity curve: overlapping trades, capital allocation and correlated exposure are not modelled.",
             "An open trade at the end of the sample is marked to the last close and flagged END_OF_DATA."
