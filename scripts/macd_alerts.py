@@ -235,8 +235,12 @@ def record_signal(history: list[dict], symbol: str, direction: str,
     candle_time = datetime.fromtimestamp(
         candle_timestamp, tz=timezone.utc
     ).astimezone(MADRID)
+    signal_id = f"{STRATEGY_ID}:{symbol}:{direction}:{candle_timestamp}"
+    # A rerun or recovery must never create a second history row for the same event.
+    if any(row.get("signal_id") == signal_id for row in history):
+        return
     history.append({
-        "signal_id": f"{STRATEGY_ID}:{symbol}:{direction}:{candle_timestamp}",
+        "signal_id": signal_id,
         "strategy_id": STRATEGY_ID,
         "strategy_version": STRATEGY_VERSION,
         "data_source": DATA_SOURCE,
