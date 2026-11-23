@@ -86,7 +86,9 @@ def simulate_trades(symbol: str, bars: list[dict],
             "signal_timestamp_utc": iso_utc(position["signal_timestamp"]),
             "entry_timestamp_utc": iso_utc(position["entry_timestamp"]),
             "entry_price": f"{entry:.10f}",
-            "exit_timestamp_utc": iso_utc(int(bars[exit_index]["timestamp"])),
+            "exit_timestamp_utc": iso_utc(
+                int(bars[exit_index]["timestamp"]) + (3600 if reason == "END_OF_DATA" else 0)
+            ),
             "exit_price": f"{exit_price:.10f}",
             "exit_reason": reason,
             "stop_price": "" if position.get("stop_price") is None else f"{position['stop_price']:.10f}",
