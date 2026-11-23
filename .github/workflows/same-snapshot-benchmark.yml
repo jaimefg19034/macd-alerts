@@ -1,0 +1,44 @@
+name: Same-snapshot comparison with original 33 percent benchmark
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/same-snapshot-benchmark.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  same-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download the exact OHLCV snapshot used for the original +33.77% result
+        uses: actions/download-artifact@v4
+        with:
+          name: atr-development-oos-research
+          repository: jaimefg19034/macd-alerts
+          run-id: 45265051893
+          path: reports/original_atr_run
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run full test suite
+        run: python -m unittest discover -s tests -v
+      - name: Re-run current asset selection on the original immutable snapshot
+        run: |
+          python scripts/asset_selection_research.py --data-dir reports/original_atr_run/data_snapshot --costs 0.10 0.20 0.30 --output reports/same_snapshot_comparison/summary.json
+      - name: Upload apples-to-apples comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: same-snapshot-original-33pct-comparison
+          path: |
+            reports/original_atr_run/data_snapshot/
+            reports/original_atr_run/atr_research/summary.json
+            reports/same_snapshot_comparison/summary.json
+          if-no-files-found: error
