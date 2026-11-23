@@ -22,7 +22,7 @@ Cada ejecución del workflow compara:
 4. MACD + ATR(14), stop 1,5 ATR y objetivo 3 ATR.
 5. MACD + ATR(14) + el mismo filtro elegido.
 
-Los resultados se guardan en artefactos independientes. El ATR no se activa en Telegram ni en paper trading.
+Los resultados se guardan en artefactos independientes. Además, la variante ATR + filtro se somete a escenarios de coste total del 0,10%, 0,20% y 0,30% por operación completa. El ATR no se activa en Telegram ni en paper trading.
 
 ## Cómo decidir
 
