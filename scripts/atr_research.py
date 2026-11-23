@@ -198,8 +198,18 @@ def main() -> int:
                 "portfolio": simulate_portfolio(symbol_trades, bars_by_symbol={symbol: data[symbol]}) if symbol in USD_EQUITY_SYMBOLS else None,
                 "folds": {str(fold_no): summarize([trade for trade in symbol_trades if trade.get("walk_forward_fold") == fold_no]) for fold_no in range(1, 5)},
             }
+        leave_one_out = {}
+        for excluded_symbol in sorted({trade["symbol"] for trade in pooled if trade["symbol"] in USD_EQUITY_SYMBOLS}):
+            remaining = [trade for trade in pooled if trade["symbol"] != excluded_symbol]
+            sim = simulate_portfolio(remaining, bars_by_symbol=data)
+            leave_one_out[excluded_symbol] = {
+                "mtm_return_pct": sim["mtm_return_pct"],
+                "max_mtm_drawdown_pct": sim["max_mtm_drawdown_pct"],
+                "closed_trades": sim["closed_trades"],
+            }
         output["oos"][f"cost_{cost:.2f}"] = {
             "by_symbol": by_symbol,
+            "leave_one_symbol_out": leave_one_out,
             "statistics": summarize(pooled),
             "portfolio": simulate_portfolio(pooled, bars_by_symbol=data),
             "folds": fold_report,
