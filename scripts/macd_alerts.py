@@ -52,8 +52,8 @@ def get_json(url: str) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
-def get_hourly_bars(symbol: str) -> list[tuple[int, float]]:
-    """Return only fully closed one-hour candles."""
+def get_hourly_bars(symbol: str) -> list[dict]:
+    """Return fully closed one-hour OHLCV candles with UTC start timestamps."""
     now = int(time.time())
     query = urllib.parse.urlencode({
         "period1": now - LOOKBACK_DAYS * 24 * 60 * 60,
@@ -71,17 +71,33 @@ def get_hourly_bars(symbol: str) -> list[tuple[int, float]]:
     result = results[0]
     timestamps = result.get("timestamp") or []
     quote = (result.get("indicators", {}).get("quote") or [{}])[0]
+    opens = quote.get("open") or []
+    highs = quote.get("high") or []
+    lows = quote.get("low") or []
     closes = quote.get("close") or []
+    volumes = quote.get("volume") or []
 
-    bars: list[tuple[int, float]] = []
-    for timestamp, close in zip(timestamps, closes):
+    bars: list[dict] = []
+    for index, timestamp in enumerate(timestamps):
         timestamp = int(timestamp)
+        open_price = opens[index] if index < len(opens) else None
+        high_price = highs[index] if index < len(highs) else None
+        low_price = lows[index] if index < len(lows) else None
+        close = closes[index] if index < len(closes) else None
+        volume = volumes[index] if index < len(volumes) else None
         # Yahoo timestamps hourly candles at their start. Ignore the still-forming
         # candle so every signal is based exclusively on completed 1H data.
-        if close is not None and timestamp + CANDLE_SECONDS <= now:
-            bars.append((timestamp, float(close)))
+        if timestamp + CANDLE_SECONDS <= now and all(value is not None for value in (open_price, high_price, low_price, close)):
+            bars.append({
+                "timestamp": timestamp,
+                "open": float(open_price),
+                "high": float(high_price),
+                "low": float(low_price),
+                "close": float(close),
+                "volume": int(volume) if volume is not None else None,
+            })
 
-    bars.sort(key=lambda item: item[0])
+    bars.sort(key=lambda item: item["timestamp"])
     if len(bars) < 40:
         raise RuntimeError(f"Histórico insuficiente para {symbol}: {len(bars)} velas cerradas")
     return bars
@@ -176,8 +192,14 @@ SIGNAL_STATS_FILE = "data/signal_stats.csv"
 SIGNAL_HORIZONS = (1, 4, 24)
 # Estimated total entry+exit costs, in percentage points. Adjust to broker/spread.
 ROUND_TRIP_COST_PCT = 0.10
+STRATEGY_ID = "macd_1h_12_26_9_close"
+STRATEGY_VERSION = "1.1.0"
+DATA_SOURCE = "Yahoo Finance chart API (unofficial)"
+ENTRY_CONVENTION = "signal_candle_close_reference"
 SIGNAL_HISTORY_FIELDS = [
+    "signal_id", "strategy_id", "strategy_version", "data_source", "entry_convention",
     "symbol", "direction", "candle_timestamp", "candle_time_madrid",
+    "candle_open", "candle_high", "candle_low", "candle_close", "candle_volume",
     "entry_price", "rsi14", "macd", "signal_line",
     "return_1h_pct", "return_1h_price", "return_1h_recorded_at", "return_1h_elapsed_hours",
     "return_4h_pct", "return_4h_price", "return_4h_recorded_at", "return_4h_elapsed_hours",
@@ -207,16 +229,27 @@ def save_signal_history(history: list[dict]) -> None:
 
 
 def record_signal(history: list[dict], symbol: str, direction: str,
-                  candle_timestamp: int, entry_price: float, rsi_value: float,
+                  bar: dict, entry_price: float, rsi_value: float,
                   macd_value: float, signal_value: float) -> None:
+    candle_timestamp = int(bar["timestamp"])
     candle_time = datetime.fromtimestamp(
         candle_timestamp, tz=timezone.utc
     ).astimezone(MADRID)
     history.append({
+        "signal_id": f"{STRATEGY_ID}:{symbol}:{direction}:{candle_timestamp}",
+        "strategy_id": STRATEGY_ID,
+        "strategy_version": STRATEGY_VERSION,
+        "data_source": DATA_SOURCE,
+        "entry_convention": ENTRY_CONVENTION,
         "symbol": symbol,
         "direction": direction,
         "candle_timestamp": str(candle_timestamp),
         "candle_time_madrid": candle_time.strftime("%Y-%m-%d %H:%M"),
+        "candle_open": f"{bar['open']:.10f}",
+        "candle_high": f"{bar['high']:.10f}",
+        "candle_low": f"{bar['low']:.10f}",
+        "candle_close": f"{bar['close']:.10f}",
+        "candle_volume": "" if bar.get("volume") is None else str(bar["volume"]),
         "entry_price": f"{entry_price:.10f}",
         "rsi14": f"{rsi_value:.4f}",
         "macd": f"{macd_value:.10f}",
@@ -244,7 +277,7 @@ def update_signal_outcomes(history: list[dict], symbol: str,
     """
     if not bars:
         return
-    completed = [(timestamp + CANDLE_SECONDS, close) for timestamp, close in bars]
+    completed = [(bar["timestamp"] + CANDLE_SECONDS, bar["close"]) for bar in bars]
     for row in history:
         if row.get("symbol") != symbol:
             continue
@@ -553,8 +586,8 @@ def main() -> int:
             continue
         try:
             bars = get_hourly_bars(symbol)
-            timestamps = [timestamp for timestamp, _ in bars]
-            closes = [close for _, close in bars]
+            timestamps = [bar["timestamp"] for bar in bars]
+            closes = [bar["close"] for bar in bars]
             macd, signal = calculate_macd(closes)
             rsi = calculate_rsi(closes, 14)
             update_signal_outcomes(signal_history, symbol, bars)
@@ -593,7 +626,7 @@ def main() -> int:
                         float(macd[-1]), float(signal[-1]), float(rsi[-1])
                     ))
                     record_signal(
-                        signal_history, symbol, direction, candle_timestamp,
+                        signal_history, symbol, direction, bars[-1],
                         closes[-1], float(rsi[-1]), float(macd[-1]), float(signal[-1])
                     )
                     last_sent[symbol] = alert_key
