@@ -11,6 +11,7 @@ on:
       - ".github/workflows/macd-alerts.yml"
       - "scripts/macd_alerts.py"
       - "scripts/signal_quality.py"
+      - "scripts/strategy_filters.py"
       - "tests/**"
 
 permissions:
