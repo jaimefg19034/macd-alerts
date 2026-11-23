@@ -75,7 +75,7 @@ def simulate_trades(symbol: str, bars: list[dict],
             "gross_return_pct": f"{gross:.6f}",
             "estimated_round_trip_cost_pct": f"{cost_pct:.6f}",
             "net_return_pct": f"{gross - cost_pct:.6f}",
-            "bars_held": exit_index - position["entry_index"],
+            "bars_held": exit_index - position["entry_index"] + 1,
         })
         position = None
 
