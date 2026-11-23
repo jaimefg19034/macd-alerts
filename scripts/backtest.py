@@ -23,6 +23,7 @@ STRATEGY_ID = macd_alerts.STRATEGY_ID
 STRATEGY_VERSION = macd_alerts.STRATEGY_VERSION
 DATA_SOURCE = macd_alerts.DATA_SOURCE
 DEFAULT_COST_PCT = 0.10
+BACKTEST_LOOKBACK_DAYS = 700  # Yahoo Finance 60m data is capped at roughly 730 days
 
 
 def iso_utc(timestamp: int) -> str:
@@ -163,7 +164,7 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mo
     errors = {}
     for symbol in symbols:
         try:
-            bars = macd_alerts.get_hourly_bars(symbol)
+            bars = macd_alerts.get_hourly_bars(symbol, lookback_days=BACKTEST_LOOKBACK_DAYS)
             raw_events = crossover_events(bars)
             events = filter_events(bars, raw_events, filter_mode)
             trades = simulate_trades(symbol, bars, events, cost_pct, risk_mode)
@@ -187,6 +188,7 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mo
         "strategy_id": STRATEGY_ID,
         "strategy_version": STRATEGY_VERSION,
         "timeframe": "1h",
+        "lookback_days_requested": BACKTEST_LOOKBACK_DAYS,
         "data_source": DATA_SOURCE,
         "entry_rule": "Next available candle open after completed-candle MACD crossover",
         "risk_mode": risk_mode,
