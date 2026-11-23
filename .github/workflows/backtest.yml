@@ -57,6 +57,8 @@ jobs:
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/fixed_sl_tp_$FILTER_MODE"
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --output-dir reports/backtest/atr_1_5x_3x
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE"
+          python scripts/backtest.py --cost-pct 0.20 --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE\_cost_0_20"
+          python scripts/backtest.py --cost-pct 0.30 --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE\_cost_0_30"
 
       - name: Upload backtest report
         uses: actions/upload-artifact@v4
