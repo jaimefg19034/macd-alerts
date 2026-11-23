@@ -82,3 +82,19 @@ Resultados por ventana OOS al coste del 0,20%:
 **Decisión:** en esta muestra, no se justifica reducir el universo si la prioridad principal es maximizar el retorno absoluto; el universo completo de 17 símbolos obtuvo el mayor retorno OOS al 0,20%. La selección de siete reduce el drawdown, y la de cinco mejora el PF y el acierto, pero ninguna supera la rentabilidad del universo completo. Por tanto, no se aplican exclusiones a Telegram ni al paper trading. Se conserva el universo actual mientras se amplía la validación prospectiva y por regímenes. No se escoge la cartera por haber ganado en OOS: el OOS solo sirve para comparar la regla que fue fijada en desarrollo.
 
 La nueva ejecución completa y su captura de datos están en [GitHub Actions](https://github.com/jaimefg19034/macd-alerts/actions/runs/45268258023), artefacto `development-only-asset-selection`.
+
+## Comparación justa con el resultado original de +33,77% (23-11-2026)
+
+La cifra original de +33,77% procedía de una ejecución ATR anterior. Para evitar comparar capturas horarias distintas, se recuperó el artefacto exacto de aquella ejecución (run `45265051893`) y se volvió a ejecutar el código actual de selección de activos sobre esa misma captura inmutable. El workflow nuevo completó correctamente todas las pruebas y el cálculo: [comparación sobre la misma captura](https://github.com/jaimefg19034/macd-alerts/actions/runs/45270994304).
+
+La estrategia se mantuvo fija: EMA200 + ADX14, stop 1,5 ATR y objetivo 5 ATR. El universo completo reproduce exactamente el resultado histórico original, lo que confirma que la comparación usa la misma muestra y convenciones.
+
+| Cartera evaluada en el mismo OOS | Coste 0,10% | Coste 0,20% | Coste 0,30% | Drawdown al 0,20% | PF al 0,20% | Operaciones |
+|---|---:|---:|---:|---:|---:|---:|
+| Universo completo (17) | **+33,77%** | **+22,60%** | **+12,39%** | 14,32% | 1,1640 | 704 |
+| Selección consistente (7) | +27,76% | +19,36% | +11,52% | **9,37%** | 1,2497 | 259 |
+| Selección priorizada (5) | +23,16% | +16,78% | +10,73% | 14,53% | **1,3305** | 184 |
+
+**Conclusión de la comparación justa:** sí, el universo completo de 17 activos es claramente mejor si el criterio principal es la rentabilidad absoluta. Conserva la configuración que dio +33,77% al coste del 0,10% y +22,60% al coste principal del 0,20%. La selección de siete reduce el drawdown de 14,32% a 9,37%, pero sacrifica 3,24 puntos de rentabilidad al 0,20%. La selección de cinco tiene el PF más alto, pero menor retorno y no mejora el drawdown. Por tanto, **no sustituimos la configuración original de 17 activos**. Se mantiene como benchmark principal de investigación; las variantes reducidas quedan como alternativas de menor frecuencia/riesgo que necesitan más validación.
+
+Esto sigue siendo backtest histórico, no rentabilidad esperada ni prueba de ventaja futura. Los costes son supuestos, el histórico es horario y el periodo OOS disponible es limitado. No se ha cambiado la configuración de Telegram ni el paper trading.
