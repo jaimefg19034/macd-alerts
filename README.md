@@ -10,21 +10,26 @@ Alertas de cruces MACD en velas de **1 hora** para:
 - META
 - TSLA
 - MRNA
+- OCGN — Ocugen
 - SAN.MC — Banco Santander (Bolsa de Madrid)
 - EURUSD=X — EUR/USD
 - EURGBP=X — EUR/GBP
+- AMD — Advanced Micro Devices
+- AVGO — Broadcom
+- MU — Micron Technology
+- JPM — JPMorgan Chase
+- XOM — Exxon Mobil
 
 ## Qué hace
 
-- GitHub Actions comprueba si hay nuevas velas de una hora cada cinco minutos.
-- Solo analiza velas que ya han terminado.
-- Calcula MACD estándar: EMA 12 menos EMA 26, y línea de señal EMA 9.
-- Envía una alerta a Telegram si, al cierre de una vela, MACD cruza por encima o por debajo de la línea de señal.
-- En Santander muestra el precio en EUR; en EUR/USD y EUR/GBP muestra la cotización con cinco decimales.
-- Guarda qué velas ha procesado para evitar repetir señales.
-- No compra ni vende acciones: solo envía avisos.
-
-La primera ejecución guarda una referencia inicial y no manda señales históricas.
+- GitHub Actions comprueba el mercado cada cinco minutos.
+- La estrategia actualmente utiliza velas 1H COMPLETADAS; no es una señal intravela ni una confirmación de 10 minutos.
+- Calcula MACD estándar (12, 26, 9) y RSI 14.
+- Envía una alerta a Telegram cuando MACD cruza la línea de señal al cierre de la vela.
+- Registra las señales BUY/SELL en `data/signal_history.csv`.
+- Calcula resultados exploratorios a 1, 4 y 24 horas cuando existe un precio suficientemente cercano al horizonte.
+- Genera estadísticas agregadas en `data/signal_stats.csv`.
+- No compra ni vende activos: el paper trading todavía no está implementado.
 
 ## Configuración necesaria: Telegram
 
@@ -76,3 +81,10 @@ Después, la comprobación queda programada automáticamente cada cinco minutos.
 - GitHub Actions tampoco garantiza que una ejecución programada empiece exactamente en el minuto previsto. Comprueba cada cinco minutos y avisa cuando detecta una vela horaria ya cerrada.
 - Los resultados pueden diferir de TradingView si su indicador, proveedor de datos, sesión o configuración no coinciden.
 - MACD 12/26/9 es una señal técnica, no una garantía ni una recomendación de inversión.
+
+
+## Investigación cuantitativa
+
+Consulta [docs/PHASE_1_AUDIT.md](docs/PHASE_1_AUDIT.md) para ver la auditoría de datos, las convenciones de evaluación, las limitaciones conocidas y el plan para el backtester y el paper trading.
+
+**Importante:** las estadísticas actuales son preliminares y no demuestran rentabilidad. El coste ida y vuelta del 0,10% es una hipótesis fija, no una cotización real de comisiones y spread.
