@@ -85,3 +85,20 @@ Limitación metodológica adicional: aunque los múltiplos ATR (1,5/5,0) se elig
 El objetivo de investigación queda fijado explícitamente en **superar el +40% de rentabilidad total mark-to-market de la cartera en el bloque fuera de muestra**, usando como escenario principal un coste total supuesto del 0,20% por operación completa. El +40% no es una tasa de acierto ni una rentabilidad anualizada: se refiere al retorno acumulado del periodo OOS disponible en la captura. Los escenarios 0,10% y 0,30% se mantienen como sensibilidad optimista y adversa.
 
 El umbral del 40% es un objetivo aspiracional para orientar la investigación, no una instrucción para seleccionar parámetros por retorno máximo. No se considerará cumplido si depende de un solo activo, una única ventana, costes irreales o drawdown excesivo. Se exigirá revisar retorno por activo y por ventana, estabilidad, número de operaciones, profit factor y drawdown. La variante ATR 1,5/5,0 alcanza +22,60% al coste principal del 0,20%, por lo que **todavía no cumple el objetivo**. No se cambiará Telegram ni el paper trading hasta disponer de evidencia más sólida y validación futura independiente.
+
+
+## Actualización: concentración por activo y objetivo +40% (23-11-2026)
+
+La ejecución reproducible más reciente del workflow ATR (misma lógica, nueva descarga de captura) mantiene la selección de desarrollo en stop 1,5 ATR / objetivo 5,0 ATR. Resultados OOS de esta captura:
+
+| Coste total supuesto | Retorno cartera MTM | Drawdown MTM | Profit factor |
+|---|---:|---:|---:|
+| 0,10% | +33,77% | 13,14% | 1,2509 |
+| 0,20% (principal) | +22,60% | 14,32% | 1,1640 |
+| 0,30% | +12,39% | 15,47% | 1,0859 |
+
+La prueba leave-one-symbol-out revela una concentración muy elevada en MRNA. Al coste principal del 0,20%, la cartera completa obtiene +22,60%, pero al retirar MRNA queda en **+1,12%**, con drawdown máximo MTM del 19,65%. Al coste del 0,30%, la cartera sin MRNA cae a -7,19%. Esto significa que la aparente ventaja de la estrategia depende en gran medida de un único activo y no se puede considerar una ventaja diversificada y robusta.
+
+En las operaciones OOS al coste del 0,20%, los mayores retornos medios netos por operación son MRNA (+3,89%, 36 operaciones), NVDA (+1,05%, 37), MU (+0,71%, 45), AVGO (+0,64%, 27), AMD (+0,60%, 33) y GOOGL (+0,39%, 48). Son resultados descriptivos de esta muestra, no una recomendación de operar esos activos ni una razón suficiente para excluir los demás.
+
+Conclusión operativa: el objetivo de +40% no se ha alcanzado ni siquiera con el coste optimista del 0,10%, y el escenario principal del 0,20% queda en +22,60%. No debemos intentar forzar el umbral aumentando riesgo, apalancamiento o concentración en MRNA. La siguiente fase debe probar robustez por activo y régimen, y comparar una cartera diversificada sin depender de un solo símbolo. El objetivo de +40% sigue siendo acumulado en el bloque OOS disponible, no anualizado, y no cambia los avisos ni el paper trading.
