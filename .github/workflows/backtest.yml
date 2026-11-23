@@ -63,7 +63,10 @@ jobs:
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --data-dir reports/data_snapshot --lookback-days 700 --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/fixed_sl_tp_$FILTER_MODE"
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --data-dir reports/data_snapshot --lookback-days 700 --output-dir reports/backtest/atr_1_5x_3x
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --data-dir reports/data_snapshot --lookback-days 700 --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE"
-          python scripts/walk_forward.py --filter-mode "$FILTER_MODE" --costs 0.10 0.20 0.30 --data-dir reports/data_snapshot --output reports/walk_forward/summary.json
+          # Compare every filter on the exact same immutable OHLCV snapshot.
+          for mode in ema200 ema_adx ema_adx_rsi; do
+            python scripts/walk_forward.py --filter-mode "$mode" --costs 0.10 0.20 0.30 --data-dir reports/data_snapshot --output "reports/walk_forward/$mode/summary.json"
+          done
 
       - name: Upload backtest report
         uses: actions/upload-artifact@v4
