@@ -1,0 +1,38 @@
+name: MACD historical backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      cost_pct:
+        description: "Estimated round-trip costs in percentage points (e.g. 0.10 = 0.10%)"
+        required: true
+        default: "0.10"
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run backtester tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Run historical backtest
+        run: python scripts/backtest.py --cost-pct "${{ inputs.cost_pct }}"
+
+      - name: Upload backtest report
+        uses: actions/upload-artifact@v4
+        with:
+          name: macd-backtest-report
+          path: reports/backtest/
+          if-no-files-found: error
