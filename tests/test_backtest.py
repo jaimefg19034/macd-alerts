@@ -46,5 +46,61 @@ class BacktestExecutionTests(unittest.TestCase):
         self.assertIsNone(result["win_rate_pct"])
 
 
+    def test_fixed_long_stop_uses_equity_distance(self):
+        sample = [
+            {"timestamp": 1000, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"timestamp": 4600, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"timestamp": 8200, "open": 100, "high": 101, "low": 98, "close": 99},
+            {"timestamp": 11800, "open": 99, "high": 100, "low": 98, "close": 99},
+        ]
+        trades = backtest.simulate_trades("AAPL", sample, [(0, "BUY")], 0.10, "fixed")
+        self.assertEqual(trades[0]["exit_reason"], "STOP_LOSS")
+        self.assertAlmostEqual(float(trades[0]["exit_price"]), 98.5)
+        self.assertAlmostEqual(float(trades[0]["target_price"]), 103.0)
+
+    def test_fixed_fx_target_uses_fx_distance(self):
+        sample = [
+            {"timestamp": 1000, "open": 1.0, "high": 1.001, "low": .999, "close": 1.0},
+            {"timestamp": 4600, "open": 1.0, "high": 1.001, "low": .999, "close": 1.0},
+            {"timestamp": 8200, "open": 1.0, "high": 1.006, "low": .999, "close": 1.005},
+            {"timestamp": 11800, "open": 1.005, "high": 1.006, "low": 1.004, "close": 1.005},
+        ]
+        trades = backtest.simulate_trades("EURUSD=X", sample, [(0, "BUY")], 0.0, "fixed")
+        self.assertEqual(trades[0]["exit_reason"], "TAKE_PROFIT")
+        self.assertAlmostEqual(float(trades[0]["exit_price"]), 1.005)
+
+    def test_fixed_short_stop_and_gap_fill(self):
+        sample = [
+            {"timestamp": 1000, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"timestamp": 4600, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"timestamp": 8200, "open": 103, "high": 104, "low": 102, "close": 103},
+            {"timestamp": 11800, "open": 103, "high": 104, "low": 102, "close": 103},
+        ]
+        trades = backtest.simulate_trades("AAPL", sample, [(0, "SELL")], 0.0, "fixed")
+        self.assertEqual(trades[0]["exit_reason"], "STOP_LOSS_GAP")
+        self.assertEqual(float(trades[0]["exit_price"]), 103.0)
+
+    def test_stop_wins_when_stop_and_target_hit_same_bar(self):
+        sample = [
+            {"timestamp": 1000, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"timestamp": 4600, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"timestamp": 8200, "open": 100, "high": 104, "low": 98, "close": 101},
+            {"timestamp": 11800, "open": 101, "high": 102, "low": 100, "close": 101},
+        ]
+        trades = backtest.simulate_trades("AAPL", sample, [(0, "BUY")], 0.0, "fixed")
+        self.assertEqual(trades[0]["exit_reason"], "STOP_LOSS")
+        self.assertEqual(float(trades[0]["exit_price"]), 98.5)
+
+    def test_macd_baseline_has_no_stop_or_target(self):
+        sample = [
+            {"timestamp": 1000, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"timestamp": 4600, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"timestamp": 8200, "open": 100, "high": 110, "low": 90, "close": 100},
+            {"timestamp": 11800, "open": 100, "high": 101, "low": 99, "close": 100},
+        ]
+        trades = backtest.simulate_trades("AAPL", sample, [(0, "BUY")], 0.0, "macd")
+        self.assertEqual(trades[0]["exit_reason"], "END_OF_DATA")
+
+
 if __name__ == "__main__":
     unittest.main()
