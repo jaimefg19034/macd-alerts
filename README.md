@@ -88,3 +88,6 @@ Después, la comprobación queda programada automáticamente cada cinco minutos.
 Consulta [docs/PHASE_1_AUDIT.md](docs/PHASE_1_AUDIT.md) para la auditoría de datos, [docs/PHASE_2_BACKTEST.md](docs/PHASE_2_BACKTEST.md) para el backtester y [docs/PAPER_TRADING.md](docs/PAPER_TRADING.md) para el ledger de paper trading. La política experimental de stop-loss/take-profit y el análisis de apalancamiento exclusivamente simulado están definidos en [docs/PHASE_3_RISK_POLICY.md](docs/PHASE_3_RISK_POLICY.md). El backtester genera un informe descargable; el paper trading se ejecuta en un workflow independiente y no envía órdenes reales ni mensajes de Telegram.
 
 **Importante:** las estadísticas actuales son preliminares y no demuestran rentabilidad. El coste ida y vuelta del 0,10% es una hipótesis fija, no una cotización real de comisiones y spread.
+
+
+- [Fase 4 — Filtros de calidad de señal](docs/PHASE_4_SIGNAL_FILTERS.md)
