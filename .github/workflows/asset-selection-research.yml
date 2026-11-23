@@ -1,0 +1,43 @@
+name: Development-only asset universe research
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/asset_selection_research.py"
+      - "tests/test_asset_selection_research.py"
+      - ".github/workflows/asset-selection-research.yml"
+      - "scripts/atr_research.py"
+      - "scripts/atr_exits.py"
+      - "scripts/backtest.py"
+      - "scripts/strategy_filters.py"
+      - "scripts/data_snapshot.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  asset-selection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run full test suite
+        run: python -m unittest discover -s tests -v
+      - name: Download one immutable OHLCV snapshot
+        run: python scripts/data_snapshot.py --lookback-days 700 --output-dir reports/data_snapshot
+      - name: Select universe on development data and evaluate frozen selection OOS
+        run: |
+          python scripts/asset_selection_research.py --data-dir reports/data_snapshot --costs 0.10 0.20 0.30 --output reports/asset_selection/summary.json
+      - name: Upload report and exact source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: development-only-asset-selection
+          path: |
+            reports/data_snapshot/
+            reports/asset_selection/
+          if-no-files-found: error
