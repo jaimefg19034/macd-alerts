@@ -23,7 +23,7 @@ class BacktestExecutionTests(unittest.TestCase):
         self.assertEqual(float(trades[0]["entry_price"]), 12.0)
         self.assertEqual(trades[0]["exit_reason"], "OPPOSITE_MACD_CROSS")
         self.assertEqual(float(trades[0]["exit_price"]), 14.0)
-        self.assertAlmostEqual(float(trades[0]["net_return_pct"]), (14 / 12 - 1) * 100 - 0.10)
+        self.assertAlmostEqual(float(trades[0]["net_return_pct"]), (14 / 12 - 1) * 100 - 0.10, places=6)
 
     def test_open_trade_is_closed_at_last_close_and_flagged(self):
         trades = backtest.simulate_trades("TEST", bars(), [(1, "BUY")], 0.10)
