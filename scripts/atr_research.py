@@ -162,7 +162,8 @@ def main() -> int:
         "oos": {}, "errors": errors,
         "limitations": [
             "The development period is used for parameter selection and is not an independent performance estimate.",
-            "The four OOS folds are not used to select or change parameters.",
+            "The four OOS folds are not used to select or change ATR multiples.",
+            "The EMA200+ADX filter was chosen after reviewing a prior OOS comparison on this same snapshot; therefore this is not a fully independent validation of the combined strategy."
             "The candidate grid and selection score are research choices and may still overfit the development sample.",
             "Costs are hypothetical round-trip scenarios, not verified broker quotes.",
             "Each fold is independently simulated and open positions are marked at its final close.",
