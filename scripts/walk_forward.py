@@ -12,7 +12,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(SCRIPT_DIR))
 import macd_alerts
-from backtest import BACKTEST_LOOKBACK_DAYS, crossover_events, simulate_trades, summarize
+from backtest import BACKTEST_LOOKBACK_DAYS, crossover_events, load_snapshot_bars, simulate_trades, summarize
 from portfolio_sim import USD_EQUITY_SYMBOLS, simulate_portfolio
 from strategy_filters import filter_events
 
@@ -95,6 +95,7 @@ def main() -> int:
                         default="ema_adx_rsi")
     parser.add_argument("--costs", nargs="*", type=float, default=list(DEFAULT_COSTS))
     parser.add_argument("--output", default=str(ROOT / "reports" / "walk_forward" / "summary.json"))
+    parser.add_argument("--data-dir", default=None, help="reuse the common OHLCV snapshot")
     args = parser.parse_args()
 
     if not args.costs or any(cost < 0 for cost in args.costs):
@@ -103,7 +104,7 @@ def main() -> int:
     data, errors = {}, {}
     for symbol in args.symbols:
         try:
-            bars = macd_alerts.get_hourly_bars(symbol, lookback_days=BACKTEST_LOOKBACK_DAYS)
+            bars = load_snapshot_bars(args.data_dir, symbol) if args.data_dir else macd_alerts.get_hourly_bars(symbol, lookback_days=BACKTEST_LOOKBACK_DAYS)
             if len(bars) < 300:
                 raise RuntimeError(f"Only {len(bars)} hourly bars; need at least 300")
             data[symbol] = bars
@@ -116,6 +117,7 @@ def main() -> int:
     output = {
         "method": "first 50% warm-up/development; next 50% split into four chronological out-of-sample folds",
         "lookback_days_requested": BACKTEST_LOOKBACK_DAYS,
+        "data_snapshot": args.data_dir,
         "filter_mode": args.filter_mode,
         "exit_mode": "ATR(14), stop 1.5x ATR / target 3x ATR",
         "cost_scenarios_round_trip_pct": args.costs,
