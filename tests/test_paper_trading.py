@@ -10,8 +10,8 @@ SPEC.loader.exec_module(paper)
 
 def sample_bars():
     return [
-        {"timestamp": 1000 + i * 3600, "open": 10.0 + i, "high": 11.0 + i,
-         "low": 9.0 + i, "close": 10.0 + i, "volume": 100}
+        {"timestamp": 1000 + i * 3600, "open": 10.0 + i, "high": 10.1 + i,
+         "low": 9.9 + i, "close": 10.0 + i, "volume": 100}
         for i in range(6)
     ]
 
@@ -56,6 +56,34 @@ class PaperTradingTests(unittest.TestCase):
     def test_negative_cost_is_rejected(self):
         with self.assertRaises(ValueError):
             paper.process_symbol_bars("TEST", sample_bars(), [], paper.empty_state(), [], -1)
+
+
+    def test_fixed_stop_closes_paper_position_on_later_bar(self):
+        bars = [
+            {"timestamp": 1000, "open": 100, "high": 100.2, "low": 99.8, "close": 100},
+            {"timestamp": 4600, "open": 100, "high": 100.2, "low": 99.8, "close": 100},
+            {"timestamp": 8200, "open": 100, "high": 100.2, "low": 99.8, "close": 100},
+            {"timestamp": 11800, "open": 99, "high": 100, "low": 98, "close": 99},
+            {"timestamp": 15400, "open": 99, "high": 99.2, "low": 98.8, "close": 99},
+        ]
+        state = {"last_processed": {"AAPL": 1000},
+                 "last_bar_processed": {"AAPL": 4600}, "positions": {}}
+        trades = []
+        created = paper.process_symbol_bars("AAPL", bars, [(1, "BUY")], state, trades, 0.10)
+        self.assertEqual(created, 1)
+        self.assertEqual(trades[0]["exit_reason"], "STOP_LOSS")
+        self.assertAlmostEqual(float(trades[0]["entry_price"]), 100.0)
+        self.assertAlmostEqual(float(trades[0]["exit_price"]), 98.5)
+        self.assertNotIn("AAPL", state["positions"])
+
+    def test_paper_position_stores_fixed_levels(self):
+        bars = sample_bars()
+        state = {"last_processed": {"AAPL": 1000},
+                 "last_bar_processed": {"AAPL": 1000}, "positions": {}}
+        paper.process_symbol_bars("AAPL", bars, [(1, "BUY")], state, [])
+        position = state["positions"]["AAPL"]
+        self.assertAlmostEqual(position["stop_price"], 11.82)
+        self.assertAlmostEqual(position["target_price"], 12.36)
 
 
 if __name__ == "__main__":
