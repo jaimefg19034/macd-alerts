@@ -29,7 +29,7 @@ Alertas de cruces MACD en velas de **1 hora** para:
 - Registra las señales BUY/SELL en `data/signal_history.csv`.
 - Calcula resultados exploratorios a 1, 4 y 24 horas cuando existe un precio suficientemente cercano al horizonte.
 - Genera estadísticas agregadas en `data/signal_stats.csv`.
-- No compra ni vende activos: el paper trading todavía no está implementado.
+- No envía órdenes reales. El paper trading simulado funciona en un workflow independiente, con ledger en `data/paper_trades.csv` y estado en `data/paper_state.json`.
 
 ## Configuración necesaria: Telegram
 
