@@ -16,6 +16,7 @@ ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(SCRIPT_DIR))
 import macd_alerts  # noqa: E402
 from strategy_filters import FILTER_MODES, filter_events  # noqa: E402
+from atr_exits import atr_levels, calculate_atr  # noqa: E402
 
 STRATEGY_ID = macd_alerts.STRATEGY_ID
 STRATEGY_VERSION = macd_alerts.STRATEGY_VERSION
@@ -56,12 +57,13 @@ def simulate_trades(symbol: str, bars: list[dict],
 
     if cost_pct < 0:
         raise ValueError("cost_pct no puede ser negativo")
-    if risk_mode not in {"macd", "fixed"}:
+    if risk_mode not in {"macd", "fixed", "atr"}:
         raise ValueError("risk_mode debe ser 'macd' o 'fixed'")
     event_by_execution = {index + 1: direction for index, direction in events
                           if index + 1 < len(bars)}
     trades: list[dict] = []
     position = None
+    atr_values = calculate_atr(bars, 14) if risk_mode == "atr" else []
 
     def close_position(exit_index: int, exit_price: float, reason: str) -> None:
         nonlocal position
@@ -106,6 +108,12 @@ def simulate_trades(symbol: str, bars: list[dict],
                 if risk_mode == "fixed":
                     stop_pct, target_pct = risk_parameters(symbol)
                     stop_price, target_price = levels(execution_price, direction, stop_pct, target_pct)
+                elif risk_mode == "atr":
+                    # Use ATR from the completed signal candle, never the entry candle.
+                    signal_atr = atr_values[execution_index - 1]
+                    if signal_atr is None:
+                        continue
+                    stop_price, target_price = atr_levels(execution_price, direction, signal_atr)
                 position = {
                     "direction": direction,
                     "signal_timestamp": int(bars[execution_index - 1]["timestamp"]) + 3600,
@@ -117,7 +125,7 @@ def simulate_trades(symbol: str, bars: list[dict],
                 }
 
         # Never use the entry candle's earlier high/low to stop out a new fill.
-        if position is not None and position["entry_index"] < execution_index and risk_mode == "fixed":
+        if position is not None and position["entry_index"] < execution_index and risk_mode in {"fixed", "atr"}:
             result = check_exit(bars[execution_index], position["direction"],
                                 position["stop_price"], position["target_price"])
             if result:
@@ -183,7 +191,7 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mo
         "risk_mode": risk_mode,
         "filter_mode": filter_mode,
         "filter_rules": {"ema200": "BUY above EMA200; SELL below EMA200", "adx": "ADX(14) >= 20", "rsi": "RSI(14) > 50 for BUY; < 50 for SELL"},
-        "exit_rule": ("Fixed SL/TP checked on subsequent OHLC bars; opposite crossover at next open; final position marked to last close" if risk_mode == "fixed" else "Next available candle open after opposite MACD crossover; final open trade marked to last close"),
+        "exit_rule": ("Fixed SL/TP checked on subsequent OHLC bars; opposite crossover at next open; final position marked to last close" if risk_mode == "fixed" else "ATR(14) from signal close, stop 1.5x ATR / target 3x ATR checked on subsequent OHLC bars" if risk_mode == "atr" else "Next available candle open after opposite MACD crossover; final open trade marked to last close"),
         "cost_assumption_round_trip_pct": cost_pct,
         "symbols": per_symbol,
         "pooled_trade_statistics": summarize(all_trades),
@@ -206,7 +214,7 @@ def main() -> int:
     parser.add_argument("--symbols", nargs="*", default=list(macd_alerts.TICKERS))
     parser.add_argument("--cost-pct", type=float, default=DEFAULT_COST_PCT,
                         help="estimated total entry+exit costs in percent (default: 0.10)")
-    parser.add_argument("--risk-mode", choices=("macd", "fixed"), default="macd", help="macd baseline or fixed stop/target variant")
+    parser.add_argument("--risk-mode", choices=("macd", "fixed", "atr"), default="macd", help="MACD baseline, fixed SL/TP or ATR-adaptive exits")
     parser.add_argument("--filter-mode", choices=FILTER_MODES, default="none")
     parser.add_argument("--output-dir", default=str(ROOT / "reports" / "backtest"))
     args = parser.parse_args()
