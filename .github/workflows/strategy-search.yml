@@ -1,0 +1,36 @@
+name: Strategy improvement search - preserve original unless beaten
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/strategy_search.py"
+      - ".github/workflows/strategy-search.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run full test suite
+        run: python -m unittest discover -s tests -v
+      - name: Download one fresh immutable 700-day hourly snapshot
+        run: python scripts/data_snapshot.py --lookback-days 700 --output-dir reports/strategy_search/data_snapshot
+      - name: Search 48 candidates on development half and compare winner against original on untouched OOS
+        run: |
+          python scripts/strategy_search.py --data-dir reports/strategy_search/data_snapshot --costs 0.10 0.20 0.30 --output reports/strategy_search/summary.json
+      - name: Upload research report and exact data snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: strategy-improvement-search
+          path: |
+            reports/strategy_search/
+          if-no-files-found: error
