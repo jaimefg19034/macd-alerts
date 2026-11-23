@@ -152,11 +152,11 @@ def main() -> int:
                            if trade.get("walk_forward_fold") == fold_number]
             by_fold[str(fold_number)] = {
                 "pooled_oos_statistics": summarize(fold_trades),
-                "portfolio_simulation": simulate_portfolio(fold_trades),
+                "portfolio_simulation": simulate_portfolio(fold_trades, bars_by_symbol=data),
             }
         output["scenarios"][f"cost_{cost:.2f}"] = {
             "pooled_oos_statistics": summarize(combined),
-            "portfolio_simulation": simulate_portfolio(combined),
+            "portfolio_simulation": simulate_portfolio(combined, bars_by_symbol=data),
             "out_of_sample_folds": by_fold,
             "trade_count": len(combined),
         }
