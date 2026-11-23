@@ -1,6 +1,6 @@
 # Fase 7 — Validación walk-forward
 
-El workflow descarga hasta 700 días de velas horarias cuando Yahoo Finance las proporciona. Para cada activo:
+El workflow descarga hasta 700 días de velas horarias cuando Yahoo Finance las proporciona y guarda una captura única e inmutable. Todas las variantes del backtest y las cuatro ventanas walk-forward reutilizan exactamente esos mismos datos. Para cada activo:
 - El primer 50% del histórico se reserva como periodo inicial de desarrollo y calentamiento de indicadores.
 - El 50% restante se divide en cuatro ventanas cronológicas consecutivas fuera de muestra.
 - Se evalúa la regla fija MACD 12/26/9 + filtro EMA200/ADX14/RSI14 + salidas ATR(14), stop 1,5 ATR y objetivo 3 ATR.
