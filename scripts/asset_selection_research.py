@@ -23,6 +23,8 @@ TARGET_ATR = 5.0
 SELECTION_COST_PCT = 0.20
 MIN_DEV_TRADES = 12
 MIN_POSITIVE_DEV_FOLDS = 2
+MAX_SELECTED_ASSETS = 10
+MAX_DEVELOPMENT_DRAWDOWN_PCT = 20.0
 
 
 def asset_is_eligible(stats: dict, positive_folds: int) -> bool:
