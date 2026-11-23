@@ -478,6 +478,7 @@ def format_alert(symbol: str, direction: str, candle_timestamp: int,
         f"Calidad técnica: {quality['grade']} ({quality['score']:.1f}/{quality['max_score']:.0f})",
         "A favor: " + (", ".join(quality["reasons"]) if quality["reasons"] else "sin confirmaciones claras"),
         "Riesgos: " + (", ".join(quality["risks"]) if quality["risks"] else "sin alertas técnicas destacables"),
+        "Nota: valoración técnica, no probabilidad de éxito.",
     ]
     return (
         f"{direction} — {display_name}\n"
