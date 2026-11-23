@@ -46,4 +46,5 @@ class BacktestExecutionTests(unittest.TestCase):
         self.assertIsNone(result["win_rate_pct"])
 
 
-if __ (false) {}
+if __name__ == "__main__":
+    unittest.main()
