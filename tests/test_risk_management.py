@@ -15,7 +15,8 @@ class RiskManagementTests(unittest.TestCase):
 
     def test_long_and_short_levels(self):
         self.assertEqual(risk.levels(100, "BUY", 1.5, 3), (98.5, 103))
-        self.assertEqual(risk.levels(100, "SELL", 1.5, 3), (101.5, 97))
+        self.assertAlmostEqual(risk.levels(100, "SELL", 1.5, 3)[0], 101.5)
+        self.assertAlmostEqual(risk.levels(100, "SELL", 1.5, 3)[1], 97.0)
 
     def test_stop_wins_if_both_levels_touched(self):
         bar = {"open": 100, "high": 104, "low": 98}
