@@ -135,6 +135,34 @@ def main() -> int:
         selected.sort()
     excluded = sorted(set(data) - set(selected))
 
+    # Rank assets using development data only and test top-K portfolios.
+    dev_trades_by_symbol = {}
+    dev_bars_by_symbol = {}
+    for symbol, bars in data.items():
+        dev_end, _ = split_indices(len(bars))
+        prefix = bars[:dev_end]
+        dev_bars_by_symbol[symbol] = prefix
+        events = filter_events(prefix, crossover_events(prefix), FILTER_MODE)
+        events = [(i, side) for i, side in events if i < dev_end - 1]
+        dev_trades_by_symbol[symbol] = simulate_atr(symbol, prefix, events, SELECTION_COST_PCT, STOP_ATR, TARGET_ATR)
+    eligible_ranked = sorted([s for s in data if development[s]["eligible"]],
+        key=lambda s: (development[s]["statistics"]["average_net_return_pct"],
+                       development[s]["positive_folds"], development[s]["statistics"]["trades"]), reverse=True)
+    candidate_portfolios = []
+    for size in range(3, min(MAX_SELECTED_ASSETS, len(eligible_ranked)) + 1):
+        symbols = sorted(eligible_ranked[:size])
+        trades = [t for symbol in symbols for t in dev_trades_by_symbol[symbol]]
+        sim = simulate_portfolio(trades, bars_by_symbol={s: dev_bars_by_symbol[s] for s in symbols})
+        candidate_portfolios.append({"symbols": symbols, "development_mtm_return_pct": sim["mtm_return_pct"],
+            "development_max_mtm_drawdown_pct": sim["max_mtm_drawdown_pct"],
+            "development_trades": sim["closed_trades"], "development_profit_factor": summarize(trades)["profit_factor"]})
+    if candidate_portfolios:
+        safe = [x for x in candidate_portfolios if x["development_max_mtm_drawdown_pct"] <= MAX_DEVELOPMENT_DRAWDOWN_PCT]
+        pool = safe or candidate_portfolios
+        best_candidate = max(pool, key=lambda x: (x["development_mtm_return_pct"], -x["development_max_mtm_drawdown_pct"]))
+        best_selected = best_candidate["symbols"]
+    else:
+        best_candidate, best_selected = None, sorted(data)
     output = {
         "method": "Per-asset universe selection using only the first 50% development block, split into three chronological subwindows; frozen selected universe tested on the later 50% OOS block.",
         "strategy": {"filter": FILTER_MODE, "stop_atr": STOP_ATR, "target_atr": TARGET_ATR},
