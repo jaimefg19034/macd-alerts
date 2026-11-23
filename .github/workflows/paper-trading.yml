@@ -1,0 +1,55 @@
+name: MACD paper trading
+
+on:
+  schedule:
+    - cron: "5 * * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/paper-trading.yml"
+      - "scripts/paper_trading.py"
+      - "tests/test_paper_trading.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: macd-paper-trading
+  cancel-in-progress: false
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run automated tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Update paper trading ledger
+        run: python scripts/paper_trading.py
+
+      - name: Save paper trading state and ledger
+        if: always()
+        run: |
+          for file in data/paper_state.json data/paper_trades.csv; do
+            if [ -f "$file" ]; then
+              git add -f "$file"
+            fi
+          done
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update MACD paper trading ledger"
+            git pull --rebase origin main
+            git push
+          fi
