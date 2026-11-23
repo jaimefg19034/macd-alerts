@@ -470,11 +470,18 @@ def split_message(message: str, limit: int = 3500) -> list[str]:
 
 def format_alert(symbol: str, direction: str, candle_timestamp: int,
                  close_price: float, macd_value: float, signal_value: float,
-                 rsi_value: float) -> str:
+                 rsi_value: float, quality: dict | None = None) -> str:
     candle_start = datetime.fromtimestamp(candle_timestamp, tz=timezone.utc).astimezone(MADRID)
     display_name, currency, precision = SYMBOL_INFO.get(symbol, (symbol, "USD", 2))
+    quality = quality or {"grade": "SIN CLASIFICAR", "score": 0, "max_score": 6, "reasons": [], "risks": ["datos insuficientes"]}
+    quality_lines = [
+        f"Calidad técnica: {quality['grade']} ({quality['score']:.1f}/{quality['max_score']:.0f})",
+        "A favor: " + (", ".join(quality["reasons"]) if quality["reasons"] else "sin confirmaciones claras"),
+        "Riesgos: " + (", ".join(quality["risks"]) if quality["risks"] else "sin alertas técnicas destacables"),
+    ]
     return (
         f"{direction} — {display_name}\n"
+        + "\\n".join(quality_lines) + "\\n"
         f"MACD: {macd_value:.4f} | Señal: {signal_value:.4f}\n"
         f"RSI 14 (close): {rsi_value:.2f}\n"
         f"Vela 1H iniciada: {candle_start:%d/%m/%Y %H:%M} (hora de Madrid)\n"
@@ -621,13 +628,23 @@ def main() -> int:
                 direction = "SELL"
 
             if direction:
+                from strategy_filters import calculate_adx
+                from signal_quality import assess_signal
+                adx_values = calculate_adx(bars, 14)
+                ema200_values = ema(closes, 200) if len(closes) >= 200 else [None] * len(closes)
+                previous_hist = float(macd[-2]) - float(signal[-2])
+                current_hist = float(macd[-1]) - float(signal[-1])
+                quality = assess_signal(
+                    direction, float(closes[-1]), ema200_values[-1],
+                    adx_values[-1], float(rsi[-1]), previous_hist, current_hist
+                )
                 candle_timestamp = timestamps[-1]
                 alert_key = f"{direction}:{candle_timestamp}"
                 if last_sent.get(symbol) != alert_key:
                     direction_text = "🟢 COMPRA" if direction == "BUY" else "🔴 VENTA"
                     alerts.append(format_alert(
                         symbol, direction_text, candle_timestamp, closes[-1],
-                        float(macd[-1]), float(signal[-1]), float(rsi[-1])
+                        float(macd[-1]), float(signal[-1]), float(rsi[-1]), quality
                     ))
                     record_signal(
                         signal_history, symbol, direction, bars[-1],
