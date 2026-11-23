@@ -26,6 +26,7 @@ class WalkForwardSplitTests(unittest.TestCase):
         result = buy_hold_benchmark({"AAPL": bars, "SAN.MC": bars})
         self.assertEqual(result["symbols"], {"AAPL": 10.0})
         self.assertEqual(result["equal_weight_return_pct"], 10.0)
+        self.assertEqual(result["median_symbol_return_pct"], 10.0)
 
     def test_invalid_splits_rejected(self):
         with self.assertRaises(ValueError):
