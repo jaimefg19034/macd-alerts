@@ -8,6 +8,7 @@ on:
       - ".github/workflows/backtest.yml"
       - "scripts/backtest.py"
       - "scripts/risk_management.py"
+      - "scripts/atr_exits.py"
       - "scripts/strategy_filters.py"
       - "tests/**"
   workflow_dispatch:
@@ -53,6 +54,8 @@ jobs:
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode macd --output-dir reports/backtest/macd_only
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --output-dir reports/backtest/fixed_sl_tp
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/fixed_sl_tp_$FILTER_MODE"
+          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --output-dir reports/backtest/atr_1_5x_3x
+          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE"
 
       - name: Upload backtest report
         uses: actions/upload-artifact@v4
