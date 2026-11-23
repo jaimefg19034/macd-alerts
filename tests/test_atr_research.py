@@ -19,8 +19,8 @@ class ATRResearchTests(unittest.TestCase):
             bars.append({"timestamp": 1000+i*3600, "open": p, "high": p+1,
                          "low": p-1, "close": p, "volume": 100})
         # The entry follows the signal candle; a narrow stop is hit on the next candle.
-        bars[2]["low"] = 95.0
-        trades = simulate_atr("AAPL", bars, [(0, "BUY")], 0.0, 1.0, 2.0)
+        bars[16]["low"] = 95.0
+        trades = simulate_atr("AAPL", bars, [(14, "BUY")], 0.0, 1.0, 2.0)
         self.assertEqual(len(trades), 1)
         self.assertEqual(trades[0]["exit_reason"], "STOP_LOSS")
         self.assertAlmostEqual(float(trades[0]["stop_price"]), 98.0)
