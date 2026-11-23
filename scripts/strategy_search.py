@@ -121,8 +121,8 @@ def main() -> int:
     ))
     winner_config = {k: winner[k] for k in ("filter_mode", "stop_atr", "target_atr")}
 
-    baseline_oos = evaluate_oos(data, **BASELINE, costs=args.costs)
-    winner_oos = evaluate_oos(data, **winner_config, costs=args.costs)
+    baseline_oos = evaluate_oos(data, BASELINE["filter_mode"], BASELINE["stop_atr"], BASELINE["target_atr"], args.costs)
+    winner_oos = evaluate_oos(data, winner_config["filter_mode"], winner_config["stop_atr"], winner_config["target_atr"], args.costs)
     accepted, rejection_reasons = is_strict_improvement(winner_oos, baseline_oos)
 
     output = {
