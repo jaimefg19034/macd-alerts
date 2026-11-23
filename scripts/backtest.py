@@ -23,7 +23,7 @@ STRATEGY_ID = macd_alerts.STRATEGY_ID
 STRATEGY_VERSION = macd_alerts.STRATEGY_VERSION
 DATA_SOURCE = macd_alerts.DATA_SOURCE
 DEFAULT_COST_PCT = 0.10
-BACKTEST_LOOKBACK_DAYS = 700  # Yahoo Finance 60m data is capped at roughly 730 days
+BACKTEST_LOOKBACK_DAYS = 700  # Extended history used by walk-forward research
 
 
 def iso_utc(timestamp: int) -> str:
@@ -158,13 +158,13 @@ def summarize(trades: list[dict]) -> dict:
     }
 
 
-def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mode: str = "macd", filter_mode: str = "none") -> tuple[dict, list[dict]]:
+def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mode: str = "macd", filter_mode: str = "none", lookback_days: int = macd_alerts.LOOKBACK_DAYS) -> tuple[dict, list[dict]]:
     all_trades: list[dict] = []
     per_symbol = {}
     errors = {}
     for symbol in symbols:
         try:
-            bars = macd_alerts.get_hourly_bars(symbol, lookback_days=BACKTEST_LOOKBACK_DAYS)
+            bars = macd_alerts.get_hourly_bars(symbol, lookback_days=lookback_days)
             raw_events = crossover_events(bars)
             events = filter_events(bars, raw_events, filter_mode)
             trades = simulate_trades(symbol, bars, events, cost_pct, risk_mode)
@@ -188,7 +188,7 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mo
         "strategy_id": STRATEGY_ID,
         "strategy_version": STRATEGY_VERSION,
         "timeframe": "1h",
-        "lookback_days_requested": BACKTEST_LOOKBACK_DAYS,
+        "lookback_days_requested": lookback_days,
         "data_source": DATA_SOURCE,
         "entry_rule": "Next available candle open after completed-candle MACD crossover",
         "risk_mode": risk_mode,
@@ -220,10 +220,11 @@ def main() -> int:
                         help="estimated total entry+exit costs in percent (default: 0.10)")
     parser.add_argument("--risk-mode", choices=("macd", "fixed", "atr"), default="macd", help="MACD baseline, fixed SL/TP or ATR-adaptive exits")
     parser.add_argument("--filter-mode", choices=FILTER_MODES, default="none")
+    parser.add_argument("--lookback-days", type=int, default=macd_alerts.LOOKBACK_DAYS)
     parser.add_argument("--output-dir", default=str(ROOT / "reports" / "backtest"))
     args = parser.parse_args()
 
-    summary, trades = run_backtest(args.symbols, args.cost_pct, args.risk_mode, args.filter_mode)
+    summary, trades = run_backtest(args.symbols, args.cost_pct, args.risk_mode, args.filter_mode, args.lookback_days)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     with (output_dir / "summary.json").open("w", encoding="utf-8") as file:
