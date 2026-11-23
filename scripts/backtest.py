@@ -15,6 +15,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(SCRIPT_DIR))
 import macd_alerts  # noqa: E402
+from strategy_filters import FILTER_MODES, filter_events  # noqa: E402
 
 STRATEGY_ID = macd_alerts.STRATEGY_ID
 STRATEGY_VERSION = macd_alerts.STRATEGY_VERSION
@@ -147,19 +148,22 @@ def summarize(trades: list[dict]) -> dict:
     }
 
 
-def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mode: str = "macd") -> tuple[dict, list[dict]]:
+def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mode: str = "macd", filter_mode: str = "none") -> tuple[dict, list[dict]]:
     all_trades: list[dict] = []
     per_symbol = {}
     errors = {}
     for symbol in symbols:
         try:
             bars = macd_alerts.get_hourly_bars(symbol)
-            events = crossover_events(bars)
+            raw_events = crossover_events(bars)
+            events = filter_events(bars, raw_events, filter_mode)
             trades = simulate_trades(symbol, bars, events, cost_pct, risk_mode)
             all_trades.extend(trades)
             per_symbol[symbol] = {
                 "bars": len(bars),
-                "signals": len(events),
+                "signals_raw": len(raw_events),
+                "signals_accepted": len(events),
+                "signals_filtered_out": len(raw_events) - len(events),
                 **summarize(trades),
                 "first_bar_utc": iso_utc(int(bars[0]["timestamp"])),
                 "last_bar_utc": iso_utc(int(bars[-1]["timestamp"])),
@@ -177,6 +181,8 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mo
         "data_source": DATA_SOURCE,
         "entry_rule": "Next available candle open after completed-candle MACD crossover",
         "risk_mode": risk_mode,
+        "filter_mode": filter_mode,
+        "filter_rules": {"ema200": "BUY above EMA200; SELL below EMA200", "adx": "ADX(14) >= 20", "rsi": "RSI(14) > 50 for BUY; < 50 for SELL"},
         "exit_rule": ("Fixed SL/TP checked on subsequent OHLC bars; opposite crossover at next open; final position marked to last close" if risk_mode == "fixed" else "Next available candle open after opposite MACD crossover; final open trade marked to last close"),
         "cost_assumption_round_trip_pct": cost_pct,
         "symbols": per_symbol,
@@ -201,10 +207,11 @@ def main() -> int:
     parser.add_argument("--cost-pct", type=float, default=DEFAULT_COST_PCT,
                         help="estimated total entry+exit costs in percent (default: 0.10)")
     parser.add_argument("--risk-mode", choices=("macd", "fixed"), default="macd", help="macd baseline or fixed stop/target variant")
+    parser.add_argument("--filter-mode", choices=FILTER_MODES, default="none")
     parser.add_argument("--output-dir", default=str(ROOT / "reports" / "backtest"))
     args = parser.parse_args()
 
-    summary, trades = run_backtest(args.symbols, args.cost_pct, args.risk_mode)
+    summary, trades = run_backtest(args.symbols, args.cost_pct, args.risk_mode, args.filter_mode)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     with (output_dir / "summary.json").open("w", encoding="utf-8") as file:
