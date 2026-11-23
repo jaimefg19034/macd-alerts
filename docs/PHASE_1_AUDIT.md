@@ -48,13 +48,22 @@ Estas convenciones deben conservarse como baseline para que los cambios futuros 
 - Resultados: retorno bruto/neto, precio de salida, hora real de observación y horas transcurridas para cada horizonte.
 - Calidad del dato: horizonte válido o ausente; nunca sustituir una observación tardía como si fuera puntual.
 
+## Extensión de esquema implementada (23-11-2026)
+
+El script ahora añade a cada señal nueva:
+
+- `signal_id` determinista por estrategia, símbolo, dirección y vela.
+- `strategy_id`, `strategy_version`, `data_source` y `entry_convention`.
+- OHLCV de la vela de señal: apertura, máximo, mínimo, cierre y volumen cuando el proveedor lo facilita.
+
+La estrategia no ha cambiado: continúa siendo MACD 1H 12/26/9 al cierre. Las señales históricas anteriores conservan vacíos en estos campos nuevos; no se inventan valores retrospectivos.
+
 ## Próximas extensiones de Fase 1
 
-1. Versionar explícitamente la estrategia y las convenciones de entrada/costes.
-2. Añadir OHLCV y características calculadas en el momento de la señal, sin introducir todavía filtros en las entradas.
-3. Separar el registro de señales del libro de operaciones simuladas.
-4. Crear un ledger de paper trading con identificador único, entrada simulada, salida, costes, tamaño, P&L y estado.
-5. Añadir pruebas automáticas para evitar duplicados, datos ausentes, velas incompletas y horizontes mal medidos.
+1. Añadir características calculadas en el momento de la señal, sin introducir todavía filtros en las entradas.
+2. Separar el registro de señales del libro de operaciones simuladas.
+3. Crear un ledger de paper trading con identificador único, entrada simulada, salida, costes, tamaño, P&L y estado.
+4. Añadir pruebas automáticas para evitar duplicados, datos ausentes, velas incompletas y horizontes mal medidos.
 
 ## Regla de investigación
 
