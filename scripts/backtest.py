@@ -18,12 +18,13 @@ import macd_alerts  # noqa: E402
 from strategy_filters import FILTER_MODES, filter_events  # noqa: E402
 from atr_exits import atr_levels, calculate_atr  # noqa: E402
 from portfolio_sim import simulate_portfolio  # noqa: E402
+from data_snapshot import filename_for_symbol  # noqa: E402
 
 STRATEGY_ID = macd_alerts.STRATEGY_ID
 STRATEGY_VERSION = macd_alerts.STRATEGY_VERSION
 DATA_SOURCE = macd_alerts.DATA_SOURCE
 DEFAULT_COST_PCT = 0.10
-BACKTEST_LOOKBACK_DAYS = 700  # Extended history used by walk-forward research
+BACKTEST_LOOKBACK_DAYS = 700  # Yahoo Finance 60m data is capped at roughly 730 days
 
 
 def iso_utc(timestamp: int) -> str:
@@ -158,13 +159,26 @@ def summarize(trades: list[dict]) -> dict:
     }
 
 
-def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mode: str = "macd", filter_mode: str = "none", lookback_days: int = macd_alerts.LOOKBACK_DAYS) -> tuple[dict, list[dict]]:
+def load_snapshot_bars(data_dir: str | Path, symbol: str) -> list[dict]:
+    root = Path(data_dir)
+    manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+    metadata = manifest.get("symbols", {}).get(symbol)
+    if not metadata:
+        raise FileNotFoundError(f"No hay snapshot para {symbol}")
+    payload = json.loads((root / metadata["file"]).read_text(encoding="utf-8"))
+    bars = payload.get("bars")
+    if not isinstance(bars, list) or not bars:
+        raise ValueError(f"Snapshot vacío o inválido para {symbol}")
+    return bars
+
+
+def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mode: str = "macd", filter_mode: str = "none", lookback_days: int = BACKTEST_LOOKBACK_DAYS, data_dir: str | None = None) -> tuple[dict, list[dict]]:
     all_trades: list[dict] = []
     per_symbol = {}
     errors = {}
     for symbol in symbols:
         try:
-            bars = macd_alerts.get_hourly_bars(symbol, lookback_days=lookback_days)
+            bars = load_snapshot_bars(data_dir, symbol) if data_dir else macd_alerts.get_hourly_bars(symbol, lookback_days=lookback_days)
             raw_events = crossover_events(bars)
             events = filter_events(bars, raw_events, filter_mode)
             trades = simulate_trades(symbol, bars, events, cost_pct, risk_mode)
@@ -189,6 +203,7 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mo
         "strategy_version": STRATEGY_VERSION,
         "timeframe": "1h",
         "lookback_days_requested": lookback_days,
+        "data_snapshot": str(data_dir) if data_dir else None,
         "data_source": DATA_SOURCE,
         "entry_rule": "Next available candle open after completed-candle MACD crossover",
         "risk_mode": risk_mode,
@@ -220,11 +235,12 @@ def main() -> int:
                         help="estimated total entry+exit costs in percent (default: 0.10)")
     parser.add_argument("--risk-mode", choices=("macd", "fixed", "atr"), default="macd", help="MACD baseline, fixed SL/TP or ATR-adaptive exits")
     parser.add_argument("--filter-mode", choices=FILTER_MODES, default="none")
-    parser.add_argument("--lookback-days", type=int, default=macd_alerts.LOOKBACK_DAYS)
+    parser.add_argument("--lookback-days", type=int, default=BACKTEST_LOOKBACK_DAYS)
+    parser.add_argument("--data-dir", default=None, help="reuse a previously downloaded OHLCV snapshot")
     parser.add_argument("--output-dir", default=str(ROOT / "reports" / "backtest"))
     args = parser.parse_args()
 
-    summary, trades = run_backtest(args.symbols, args.cost_pct, args.risk_mode, args.filter_mode, args.lookback_days)
+    summary, trades = run_backtest(args.symbols, args.cost_pct, args.risk_mode, args.filter_mode, args.lookback_days, args.data_dir)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     with (output_dir / "summary.json").open("w", encoding="utf-8") as file:
