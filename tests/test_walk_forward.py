@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from walk_forward import split_walk_forward
+from walk_forward import buy_hold_benchmark, split_walk_forward
 
 
 class WalkForwardSplitTests(unittest.TestCase):
@@ -15,6 +15,17 @@ class WalkForwardSplitTests(unittest.TestCase):
         for left, right in zip(folds, folds[1:]):
             self.assertEqual(left[1], right[0])
         self.assertTrue(all(start < end for start, end in folds))
+
+    def test_buy_hold_benchmark_uses_usd_equities_only(self):
+        bars = [
+            {"open": 100, "close": 100},
+            {"open": 100, "close": 101},
+            {"open": 100, "close": 105},
+            {"open": 110, "close": 110},
+        ]
+        result = buy_hold_benchmark({"AAPL": bars, "SAN.MC": bars})
+        self.assertEqual(result["symbols"], {"AAPL": 10.0})
+        self.assertEqual(result["equal_weight_return_pct"], 10.0)
 
     def test_invalid_splits_rejected(self):
         with self.assertRaises(ValueError):
