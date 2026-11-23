@@ -55,7 +55,7 @@ Esto no justifica excluir o seleccionar activos todavía: MRNA puede dominar res
 
 Se añadió un experimento independiente en `scripts/atr_research.py`. La selección se realiza únicamente con el primer 50% del histórico, usando el filtro EMA200 + ADX y un coste supuesto del 0,20% por operación completa. Se compararon 16 combinaciones predefinidas: stop de 1,0 / 1,5 / 2,0 / 2,5 ATR y objetivo de 2,0 / 3,0 / 4,0 / 5,0 ATR. Solo se admiten configuraciones con al menos 100 operaciones de desarrollo y profit factor finito.
 
-La combinación seleccionada fue **stop 1,5 ATR / objetivo 5,0 ATR** (665 operaciones de desarrollo, acierto 26,32% aproximadamente, PF 1,0383 y retorno neto medio +0,0440% por operación al coste supuesto del 0,20%). La selección no significa que sea una configuración rentable: el margen estadístico del periodo de desarrollo es reducido.
+La combinación seleccionada fue **stop 1,5 ATR / objetivo 5,0 ATR** (665 operaciones de desarrollo, acierto 24,96%, PF 1,0383 y retorno neto medio +0,0440% por operación al coste supuesto del 0,20%). La selección no significa que sea una configuración rentable: el margen estadístico del periodo de desarrollo es reducido.
 
 Con esos parámetros congelados, se evaluó el 50% posterior en cuatro ventanas cronológicas. Resultados OOS agrupados:
 
