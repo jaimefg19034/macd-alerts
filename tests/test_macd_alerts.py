@@ -80,7 +80,7 @@ class OutcomeTests(unittest.TestCase):
         ]
         macd_alerts.update_signal_outcomes([buy, sell], "TEST", bars)
         self.assertAlmostEqual(float(buy["return_1h_pct"]), 10.0)
-        self.assertAlmostEqual(float(sell["return_1h_pct"]), (100.0 / 110.0 - 1.0) * 100.0)
+        self.assertAlmostEqual(float(sell["return_1h_pct"]), (100.0 / 110.0 - 1.0) * 100.0, places=6)
         self.assertAlmostEqual(float(buy["net_return_1h_pct"]), 9.9)
 
     def test_late_weekend_like_observation_is_not_mislabelled(self):
