@@ -1,6 +1,13 @@
 name: MACD historical backtest
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/backtest.yml"
+      - "scripts/backtest.py"
+      - "tests/test_backtest.py"
   workflow_dispatch:
     inputs:
       cost_pct:
