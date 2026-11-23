@@ -8,6 +8,7 @@ on:
       - ".github/workflows/backtest.yml"
       - "scripts/backtest.py"
       - "scripts/risk_management.py"
+      - "scripts/strategy_filters.py"
       - "tests/**"
   workflow_dispatch:
     inputs:
@@ -15,6 +16,15 @@ on:
         description: "Estimated round-trip costs in percentage points (e.g. 0.10 = 0.10%)"
         required: true
         default: "0.10"
+      filter_mode:
+        description: "Signal filter applied to the fixed SL/TP variant"
+        type: choice
+        required: true
+        default: "ema_adx_rsi"
+        options:
+          - "ema200"
+          - "ema_adx"
+          - "ema_adx_rsi"
 
 permissions:
   contents: read
@@ -22,7 +32,7 @@ permissions:
 jobs:
   backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -35,12 +45,14 @@ jobs:
       - name: Run backtester tests
         run: python -m unittest discover -s tests -v
 
-      - name: Run historical backtest
+      - name: Run baseline and filtered backtests
         env:
           BACKTEST_COST_PCT: ${{ inputs.cost_pct || '0.10' }}
+          FILTER_MODE: ${{ inputs.filter_mode || 'ema_adx_rsi' }}
         run: |
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode macd --output-dir reports/backtest/macd_only
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --output-dir reports/backtest/fixed_sl_tp
+          python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode fixed --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/fixed_sl_tp_$FILTER_MODE"
 
       - name: Upload backtest report
         uses: actions/upload-artifact@v4
