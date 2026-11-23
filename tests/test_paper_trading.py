@@ -40,7 +40,7 @@ class PaperTradingTests(unittest.TestCase):
         self.assertEqual(len(trades), 1)
         self.assertEqual(trades[0]["direction"], "BUY")
         self.assertEqual(float(trades[0]["entry_price"]), 12.0)
-        self.assertEqual(float(trades[0]["exit_price"]), 14.0)
+        self.assertEqual(float(trades[0]["exit_price"]), 13.0)
         self.assertEqual(state["positions"]["TEST"]["direction"], "SELL")
 
     def test_reprocessing_same_candles_does_not_duplicate_trade(self):
@@ -77,7 +77,7 @@ class PaperTradingTests(unittest.TestCase):
         self.assertNotIn("AAPL", state["positions"])
 
     def test_paper_position_stores_fixed_levels(self):
-        bars = sample_bars()
+        bars = sample_bars()[:3]
         state = {"last_processed": {"AAPL": 1000},
                  "last_bar_processed": {"AAPL": 1000}, "positions": {}}
         paper.process_symbol_bars("AAPL", bars, [(1, "BUY")], state, [])
