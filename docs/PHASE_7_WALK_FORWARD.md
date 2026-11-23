@@ -8,6 +8,6 @@ El workflow descarga hasta 700 días de velas horarias cuando Yahoo Finance las 
 
 No se optimizan parámetros en este proceso: se comprueba si la hipótesis fija mantiene resultados en periodos posteriores. Cada ventana se simula por separado y las posiciones se cierran al final de cada ventana, evitando arrastrar una posición de una ventana a otra.
 
-El informe incluye resultados por cada ventana fuera de muestra, operaciones, tasa de acierto, retorno medio, profit factor, comparación con una referencia buy-and-hold equiponderada de acciones USD y una simulación de cartera con riesgo nominal del 0,5% y exposición máxima del 100%, limitada a acciones estadounidenses en USD.
+El informe incluye resultados por cada ventana fuera de muestra, operaciones, tasa de acierto, retorno medio, profit factor, comparación con una referencia buy-and-hold equiponderada y mediana de rentabilidades por acción USD y una simulación de cartera con riesgo nominal del 0,5% y exposición máxima del 100%, limitada a acciones estadounidenses en USD.
 
 Limitaciones: Yahoo puede no entregar los 700 días completos; costes son supuestos; drawdown de cartera realizado; posiciones cortas teóricas; sin préstamo, financiación ni reglas de margen. La evaluación no demuestra rentabilidad futura y no activa la estrategia en Telegram ni en paper trading.
