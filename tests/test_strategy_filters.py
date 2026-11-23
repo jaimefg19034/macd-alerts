@@ -19,7 +19,8 @@ def rising_bars(n=240):
 class StrategyFilterTests(unittest.TestCase):
     def test_adx_detects_persistent_trend(self):
         values = filters.calculate_adx(rising_bars(), 14)
-        self.assertIsNone(values[26 - 1] if len(values) > 26 else None)
+        self.assertIsNone(values[26])
+        self.assertIsNotNone(values[27])
         self.assertGreater(values[-1], 90)
 
     def test_ema200_keeps_long_in_uptrend(self):
@@ -31,9 +32,11 @@ class StrategyFilterTests(unittest.TestCase):
         events = [(10, "BUY"), (20, "SELL")]
         self.assertEqual(filters.filter_events(rising_bars(), events, "none"), events)
 
-    def test_adx_mode_rejects_when_strength_is_too_high_to_meet(self):
+    def test_combined_filter_accepts_aligned_trend_and_momentum(self):
         bars = rising_bars()
-        self.assertEqual(filters.filter_events(bars, [(220, "BUY")], "ema_adx", 101), []) if False else None
+        self.assertEqual(filters.filter_events(
+            bars, [(220, "BUY")], "ema_adx_rsi", 20
+        ), [(220, "BUY")])
 
     def test_invalid_filter_mode_rejected(self):
         with self.assertRaises(ValueError):
