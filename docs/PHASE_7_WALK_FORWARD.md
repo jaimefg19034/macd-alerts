@@ -43,3 +43,9 @@ Retorno de cartera por ventana al coste supuesto del 0,10%:
 Lectura: añadir ADX reduce el drawdown respecto a EMA200 en esta muestra y mejora el profit factor, aunque reduce el retorno total. Añadir RSI reduce aún más la frecuencia y el drawdown, y eleva el profit factor, pero también reduce la rentabilidad de cartera. Ningún filtro es positivo en las cuatro ventanas. Todos los escenarios dejan de ser rentables en torno al coste supuesto del 0,30%, con diferencias pequeñas entre filtros. Por tanto, EMA200 + ADX es una hipótesis prometedora para seguir estudiando la relación rentabilidad/drawdown, no una estrategia validada ni una configuración que deba activarse en producción.
 
 Los costes son escenarios hipotéticos uniformes, no tarifas verificadas de un bróker. El drawdown mark-to-market se calcula con cierres horarios, no con todos los movimientos intrabar. La simulación no incluye dividendos, préstamo de acciones, financiación ni conversiones de divisa.
+
+## Análisis preliminar por activo (coste supuesto 0,10%)
+
+El resultado agregado oculta diferencias fuertes entre símbolos. En la variante EMA200 + ADX + RSI, los mejores retornos medios netos por operación fueron MRNA (+1,4178%, 32 operaciones), NVDA (+0,8891%, 33), MU (+0,7790%, 39), AVGO (+0,5697%, 27) y GOOGL (+0,4866%, 42). Entre los peores: TSLA (-0,8868%, 39), SAN.MC (-0,2510%, 37), EURGBP=X (-0,0963%, 72), EURUSD=X (-0,0950%, 79) y META (-0,0449%, 39).
+
+Esto no justifica excluir o seleccionar activos todavía: MRNA puede dominar resultados con una muestra relativamente pequeña y sus movimientos extremos pueden no repetirse. Además, la cartera simulada no incluye FX ni SAN.MC por diferencias de divisa, aunque sus operaciones sí aparecen en las estadísticas agrupadas. El siguiente estudio debe medir consistencia por activo y por ventana, no solo el retorno medio agregado, y separar universos de acciones y FX antes de compararlos.
