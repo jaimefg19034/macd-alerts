@@ -19,6 +19,7 @@ class TelegramQualityMessageTests(unittest.TestCase):
         self.assertIn("Calidad técnica: BUENA (4.5/6)", message)
         self.assertIn("precio alineado con EMA200", message)
         self.assertIn("Riesgos: RSI alto", message)
+        self.assertIn("no probabilidad de éxito", message)
         self.assertIn("Confirmación: cierre de vela 1H", message)
 
 
