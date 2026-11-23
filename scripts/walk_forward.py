@@ -12,7 +12,7 @@ ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(SCRIPT_DIR))
 import macd_alerts
 from backtest import BACKTEST_LOOKBACK_DAYS, crossover_events, simulate_trades, summarize
-from portfolio_sim import simulate_portfolio
+from portfolio_sim import USD_EQUITY_SYMBOLS, simulate_portfolio
 from strategy_filters import filter_events
 
 DEFAULT_COSTS = (0.10, 0.20, 0.30)
@@ -59,6 +59,32 @@ def evaluate_symbol(symbol: str, bars: list[dict], filter_mode: str,
     return fold_summaries, all_trades
 
 
+
+def buy_hold_benchmark(data: dict[str, list[dict]]) -> dict:
+    """Equal-weight buy-and-hold benchmark over each symbol's OOS half."""
+    per_symbol = {}
+    returns = []
+    for symbol, bars in data.items():
+        if symbol not in USD_EQUITY_SYMBOLS or len(bars) < 2:
+            continue
+        start = int(len(bars) * 0.50)
+        entry = float(bars[start]["open"])
+        exit_price = float(bars[-1]["close"])
+        if entry <= 0:
+            continue
+        value = (exit_price / entry - 1.0) * 100.0
+        per_symbol[symbol] = round(value, 4)
+        returns.append(value)
+    average = sum(returns) / len(returns) if returns else None
+    return {
+        "method": "equal-weight buy-and-hold of USD US equities from OOS start to final close",
+        "symbols": per_symbol,
+        "equal_weight_return_pct": None if average is None else round(average, 4),
+        "initial_10000_final_value": None if average is None else round(10000 * (1 + average / 100), 2),
+        "note": "Excludes dividends, benchmark costs and currency effects; static equal-weight terminal comparison, not a daily rebalanced curve."
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--symbols", nargs="*", default=list(macd_alerts.TICKERS))
@@ -92,6 +118,7 @@ def main() -> int:
         "cost_scenarios_round_trip_pct": args.costs,
         "symbols": {},
         "scenarios": {},
+        "buy_and_hold_benchmark": buy_hold_benchmark(data),
         "errors": errors,
         "limitations": [
             "No parameter optimization is performed; this is chronological out-of-sample evaluation of fixed rules.",
@@ -114,9 +141,18 @@ def main() -> int:
             }
             for item in folds:
                 fold_totals.append(item)
+        by_fold = {}
+        for fold_number in range(1, 5):
+            fold_trades = [trade for trade in combined
+                           if trade.get("walk_forward_fold") == fold_number]
+            by_fold[str(fold_number)] = {
+                "pooled_oos_statistics": summarize(fold_trades),
+                "portfolio_simulation": simulate_portfolio(fold_trades),
+            }
         output["scenarios"][f"cost_{cost:.2f}"] = {
             "pooled_oos_statistics": summarize(combined),
             "portfolio_simulation": simulate_portfolio(combined),
+            "out_of_sample_folds": by_fold,
             "trade_count": len(combined),
         }
 
