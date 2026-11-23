@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse
 import json
+import statistics
 import sys
 import time
 from pathlib import Path
@@ -80,6 +81,8 @@ def buy_hold_benchmark(data: dict[str, list[dict]]) -> dict:
         "method": "equal-weight buy-and-hold of USD US equities from OOS start to final close",
         "symbols": per_symbol,
         "equal_weight_return_pct": None if average is None else round(average, 4),
+        "median_symbol_return_pct": None if not returns else round(statistics.median(returns), 4),
+        "mean_excluding_best_symbol_pct": (None if len(returns) < 2 else round(sum(sorted(returns)[:-1]) / (len(returns) - 1), 4)),
         "initial_10000_final_value": None if average is None else round(10000 * (1 + average / 100), 2),
         "note": "Excludes dividends, benchmark costs and currency effects; static equal-weight terminal comparison, not a daily rebalanced curve."
     }
