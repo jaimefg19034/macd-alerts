@@ -58,6 +58,14 @@ class SignalRecordTests(unittest.TestCase):
         macd_alerts.record_signal(history, "AAPL", "SELL", other, 103.0, 45.0, 0.8, 1.0)
         self.assertNotEqual(history[0]["signal_id"], history[1]["signal_id"])
 
+    def test_recording_same_signal_twice_is_idempotent(self):
+        history = []
+        for _ in range(2):
+            macd_alerts.record_signal(
+                history, "AAPL", "BUY", self.bar, 103.0, 55.0, 1.2, 1.0
+            )
+        self.assertEqual(len(history), 1)
+
 
 class OutcomeTests(unittest.TestCase):
     def make_row(self, direction="BUY"):
