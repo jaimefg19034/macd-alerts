@@ -44,10 +44,21 @@ def crossover_events(bars: list[dict]) -> list[tuple[int, str]]:
 
 def simulate_trades(symbol: str, bars: list[dict],
                     events: list[tuple[int, str]],
-                    cost_pct: float = DEFAULT_COST_PCT) -> list[dict]:
-    """Enter/exit at the next available candle open; close/reverse on opposite cross."""
+                    cost_pct: float = DEFAULT_COST_PCT,
+                    risk_mode: str = "macd") -> list[dict]:
+    """Simulate MACD-only or fixed SL/TP exits using completed OHLC bars.
+
+    Entry/reversal fills occur at the next bar open. Stops/targets are checked
+    only on bars after entry. If both are touched in one bar, stop wins.
+    """
+    from risk_management import check_exit, levels, risk_parameters
+
     if cost_pct < 0:
         raise ValueError("cost_pct no puede ser negativo")
+    if risk_mode not in {"macd", "fixed"}:
+        raise ValueError("risk_mode debe ser 'macd' o 'fixed'")
+    event_by_execution = {index + 1: direction for index, direction in events
+                          if index + 1 < len(bars)}
     trades: list[dict] = []
     position = None
 
@@ -72,6 +83,8 @@ def simulate_trades(symbol: str, bars: list[dict],
             "exit_timestamp_utc": iso_utc(int(bars[exit_index]["timestamp"])),
             "exit_price": f"{exit_price:.10f}",
             "exit_reason": reason,
+            "stop_price": "" if position.get("stop_price") is None else f"{position['stop_price']:.10f}",
+            "target_price": "" if position.get("target_price") is None else f"{position['target_price']:.10f}",
             "gross_return_pct": f"{gross:.6f}",
             "estimated_round_trip_cost_pct": f"{cost_pct:.6f}",
             "net_return_pct": f"{gross - cost_pct:.6f}",
@@ -79,22 +92,36 @@ def simulate_trades(symbol: str, bars: list[dict],
         })
         position = None
 
-    for signal_index, direction in events:
-        execution_index = signal_index + 1
-        if execution_index >= len(bars):
-            continue
+    for execution_index in range(1, len(bars)):
         execution_price = float(bars[execution_index]["open"])
-        if position is not None:
-            if position["direction"] == direction:
-                continue
-            close_position(execution_index, execution_price, "OPPOSITE_MACD_CROSS")
-        position = {
-            "direction": direction,
-            "signal_timestamp": int(bars[signal_index]["timestamp"]) + 3600,
-            "entry_timestamp": int(bars[execution_index]["timestamp"]),
-            "entry_price": execution_price,
-            "entry_index": execution_index,
-        }
+        direction = event_by_execution.get(execution_index)
+
+        # A crossover is executed at this bar's open before its intrabar range.
+        if direction:
+            if position is not None and position["direction"] != direction:
+                close_position(execution_index, execution_price, "OPPOSITE_MACD_CROSS")
+            if position is None:
+                stop_price = target_price = None
+                if risk_mode == "fixed":
+                    stop_pct, target_pct = risk_parameters(symbol)
+                    stop_price, target_price = levels(execution_price, direction, stop_pct, target_pct)
+                position = {
+                    "direction": direction,
+                    "signal_timestamp": int(bars[execution_index - 1]["timestamp"]) + 3600,
+                    "entry_timestamp": int(bars[execution_index]["timestamp"]),
+                    "entry_price": execution_price,
+                    "entry_index": execution_index,
+                    "stop_price": stop_price,
+                    "target_price": target_price,
+                }
+
+        # Never use the entry candle's earlier high/low to stop out a new fill.
+        if position is not None and position["entry_index"] < execution_index and risk_mode == "fixed":
+            result = check_exit(bars[execution_index], position["direction"],
+                                position["stop_price"], position["target_price"])
+            if result:
+                reason, fill_price = result
+                close_position(execution_index, fill_price, reason)
 
     if position is not None and bars:
         last_index = len(bars) - 1
@@ -120,7 +147,7 @@ def summarize(trades: list[dict]) -> dict:
     }
 
 
-def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT) -> tuple[dict, list[dict]]:
+def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT, risk_mode: str = "macd") -> tuple[dict, list[dict]]:
     all_trades: list[dict] = []
     per_symbol = {}
     errors = {}
@@ -128,7 +155,7 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT) -> tupl
         try:
             bars = macd_alerts.get_hourly_bars(symbol)
             events = crossover_events(bars)
-            trades = simulate_trades(symbol, bars, events, cost_pct)
+            trades = simulate_trades(symbol, bars, events, cost_pct, risk_mode)
             all_trades.extend(trades)
             per_symbol[symbol] = {
                 "bars": len(bars),
@@ -149,7 +176,8 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT) -> tupl
         "timeframe": "1h",
         "data_source": DATA_SOURCE,
         "entry_rule": "Next available candle open after completed-candle MACD crossover",
-        "exit_rule": "Next available candle open after opposite MACD crossover; final open trade marked to last close",
+        "risk_mode": risk_mode,
+        "exit_rule": ("Fixed SL/TP checked on subsequent OHLC bars; opposite crossover at next open; final position marked to last close" if risk_mode == "fixed" else "Next available candle open after opposite MACD crossover; final open trade marked to last close"),
         "cost_assumption_round_trip_pct": cost_pct,
         "symbols": per_symbol,
         "pooled_trade_statistics": summarize(all_trades),
@@ -158,6 +186,7 @@ def run_backtest(symbols: list[str], cost_pct: float = DEFAULT_COST_PCT) -> tupl
             "Yahoo Finance public chart endpoint is unofficial and may be delayed, incomplete or rate-limited.",
             "Intraday history availability is limited; this run uses the bars returned by the provider, not a multi-year institutional dataset.",
             "A flat cost assumption is not a verified broker spread, commission or slippage quote.",
+            "Fixed SL/TP are price distances: equities 1.5%/3.0%; FX 0.25%/0.50%. Same-bar stop/target ambiguity assumes stop first.",
             "SELL trades are theoretical short exposures; borrow costs, locate availability and margin are not modelled.",
             "Pooled statistics are not a portfolio equity curve: overlapping trades, capital allocation and correlated exposure are not modelled.",
             "An open trade at the end of the sample is marked to the last close and flagged END_OF_DATA."
@@ -171,10 +200,11 @@ def main() -> int:
     parser.add_argument("--symbols", nargs="*", default=list(macd_alerts.TICKERS))
     parser.add_argument("--cost-pct", type=float, default=DEFAULT_COST_PCT,
                         help="estimated total entry+exit costs in percent (default: 0.10)")
+    parser.add_argument("--risk-mode", choices=("macd", "fixed"), default="macd", help="macd baseline or fixed stop/target variant")
     parser.add_argument("--output-dir", default=str(ROOT / "reports" / "backtest"))
     args = parser.parse_args()
 
-    summary, trades = run_backtest(args.symbols, args.cost_pct)
+    summary, trades = run_backtest(args.symbols, args.cost_pct, args.risk_mode)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     with (output_dir / "summary.json").open("w", encoding="utf-8") as file:
@@ -183,7 +213,7 @@ def main() -> int:
     fields = [
         "trade_id", "symbol", "direction", "signal_timestamp_utc",
         "entry_timestamp_utc", "entry_price", "exit_timestamp_utc", "exit_price",
-        "exit_reason", "gross_return_pct", "estimated_round_trip_cost_pct",
+        "exit_reason", "stop_price", "target_price", "gross_return_pct", "estimated_round_trip_cost_pct",
         "net_return_pct", "bars_held",
     ]
     with (output_dir / "trades.csv").open("w", encoding="utf-8", newline="") as file:
