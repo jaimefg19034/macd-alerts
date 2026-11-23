@@ -79,3 +79,9 @@ Lectura: esta combinación mejora los resultados agregados de la hipótesis ATR 
 
 
 Limitación metodológica adicional: aunque los múltiplos ATR (1,5/5,0) se eligieron solo con el periodo de desarrollo, el filtro EMA200 + ADX se había destacado tras revisar una comparación OOS anterior hecha sobre esta misma captura. Por eso, las cifras OOS de esta variante no constituyen una validación completamente independiente de toda la combinación. Para conseguirla habría que fijar filtro y salidas antes de descargar un nuevo bloque de datos futuro, sin volver a ajustar nada durante ese bloque.
+
+## Objetivo de rentabilidad del proyecto (23-11-2026)
+
+El objetivo de investigación queda fijado explícitamente en **superar el +40% de rentabilidad total mark-to-market de la cartera en el bloque fuera de muestra**, usando como escenario principal un coste total supuesto del 0,20% por operación completa. El +40% no es una tasa de acierto ni una rentabilidad anualizada: se refiere al retorno acumulado del periodo OOS disponible en la captura. Los escenarios 0,10% y 0,30% se mantienen como sensibilidad optimista y adversa.
+
+El umbral del 40% es un objetivo aspiracional para orientar la investigación, no una instrucción para seleccionar parámetros por retorno máximo. No se considerará cumplido si depende de un solo activo, una única ventana, costes irreales o drawdown excesivo. Se exigirá revisar retorno por activo y por ventana, estabilidad, número de operaciones, profit factor y drawdown. La variante ATR 1,5/5,0 alcanza +22,60% al coste principal del 0,20%, por lo que **todavía no cumple el objetivo**. No se cambiará Telegram ni el paper trading hasta disponer de evidencia más sólida y validación futura independiente.
