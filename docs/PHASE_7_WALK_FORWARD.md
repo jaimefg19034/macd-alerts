@@ -102,3 +102,21 @@ La prueba leave-one-symbol-out revela una concentración muy elevada en MRNA. Al
 En las operaciones OOS al coste del 0,20%, los mayores retornos medios netos por operación son MRNA (+3,89%, 36 operaciones), NVDA (+1,05%, 37), MU (+0,71%, 45), AVGO (+0,64%, 27), AMD (+0,60%, 33) y GOOGL (+0,39%, 48). Son resultados descriptivos de esta muestra, no una recomendación de operar esos activos ni una razón suficiente para excluir los demás.
 
 Conclusión operativa: el objetivo de +40% no se ha alcanzado ni siquiera con el coste optimista del 0,10%, y el escenario principal del 0,20% queda en +22,60%. No debemos intentar forzar el umbral aumentando riesgo, apalancamiento o concentración en MRNA. La siguiente fase debe probar robustez por activo y régimen, y comparar una cartera diversificada sin depender de un solo símbolo. El objetivo de +40% sigue siendo acumulado en el bloque OOS disponible, no anualizado, y no cambia los avisos ni el paper trading.
+
+## Validación anidada de parámetros ATR (23-11-2026)
+
+Se añadió `scripts/nested_walk_forward.py` y su workflow. En cada una de las cuatro ventanas cronológicas, la combinación stop/objetivo se selecciona usando exclusivamente las barras anteriores a esa ventana; después se compara en el mismo bloque de prueba con la referencia fija stop 1,5 ATR / objetivo 5 ATR. La captura horaria es única e inmutable para ambas variantes. La suite completa de tests y el workflow finalizaron correctamente.
+
+Resultados de la nueva captura (no comparar directamente con el +33,77% histórico, porque el periodo de datos es distinto):
+
+| Coste supuesto | Referencia fija 1,5/5 | Parámetros elegidos en cada ventana | DD referencia | DD adaptativa |
+|---|---:|---:|---:|---:|
+| 0,10% | +36,77% | +26,04% | 12,40% | 11,56% |
+| 0,20% | +25,39% | +16,85% | 13,56% | 11,88% |
+| 0,30% | +14,97% | +8,35% | 14,69% | 13,10% |
+
+La variante adaptativa aumentó el porcentaje de aciertos (31,45% frente a 27,03% al coste del 0,10%), pero redujo el profit factor (1,219 frente a 1,264) y la rentabilidad total en los tres escenarios de costes. Las ventanas eligieron 1,5/5, 2,5/5, 2,5/5 y 1,5/5, respectivamente. No supera el criterio de adopción y queda descartada como reemplazo.
+
+**Decisión:** mantener la referencia fija 1,5/5 con los 17 activos. La investigación anidada queda registrada como variante experimental no adoptada. La prueba no cambia Telegram ni el paper trading. Los costes siguen siendo hipótesis y los resultados no garantizan rentabilidad futura.
+
+Ejecución y artefacto con el informe y los datos exactos: https://github.com/jaimefg19034/macd-alerts/actions/runs/45272351250
