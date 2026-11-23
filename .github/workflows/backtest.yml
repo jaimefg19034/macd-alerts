@@ -35,7 +35,9 @@ jobs:
         run: python -m unittest discover -s tests -v
 
       - name: Run historical backtest
-        run: python scripts/backtest.py --cost-pct "${{ inputs.cost_pct }}"
+        env:
+          BACKTEST_COST_PCT: ${{ inputs.cost_pct || '0.10' }}
+        run: python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT"
 
       - name: Upload backtest report
         uses: actions/upload-artifact@v4
