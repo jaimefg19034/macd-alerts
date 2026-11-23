@@ -10,6 +10,8 @@ on:
     paths:
       - ".github/workflows/paper-trading.yml"
       - "scripts/paper_trading.py"
+      - "scripts/risk_management.py"
+      - "scripts/backtest.py"
       - "tests/test_paper_trading.py"
 
 permissions:
