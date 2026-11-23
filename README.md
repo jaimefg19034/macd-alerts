@@ -94,4 +94,4 @@ Consulta [docs/PHASE_1_AUDIT.md](docs/PHASE_1_AUDIT.md) para la auditoría de da
 - [Fase 5 — Salidas adaptadas a volatilidad con ATR](docs/PHASE_5_ATR_EXITS.md)
 - [Fase 6 — Simulación de cartera y riesgo](docs/PHASE_6_PORTFOLIO_RISK.md)
 - [Calidad técnica de las alertas Telegram](docs/TELEGRAM_SIGNAL_QUALITY.md)
-- [Validación walk-forward](scripts/walk_forward.py)
+- [Fase 7 — Validación walk-forward](docs/PHASE_7_WALK_FORWARD.md)
