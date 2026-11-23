@@ -35,6 +35,24 @@ class PortfolioSimulationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             simulate_portfolio([], risk_pct=0)
 
+    def test_mark_to_market_drawdown_includes_open_loss(self):
+        from datetime import datetime, timezone
+        def ts(hour):
+            return int(datetime(2026, 1, 1, hour, tzinfo=timezone.utc).timestamp())
+        trade_data = trade("AAPL", "mtm", 3)
+        trade_data["estimated_round_trip_cost_pct"] = "0.10"
+        bars = [
+            {"timestamp": ts(9), "close": 100},
+            {"timestamp": ts(10), "close": 98},
+            {"timestamp": ts(11), "close": 99},
+        ]
+        result = simulate_portfolio([trade_data], bars_by_symbol={"AAPL": bars})
+        self.assertGreater(result["max_mtm_drawdown_pct"], 2.0)
+        self.assertGreater(result["max_mtm_drawdown_pct"],
+                           result["max_realized_drawdown_pct"])
+        self.assertEqual(result["open_positions_at_sample_end"], 0)
+        self.assertAlmostEqual(result["final_realized_equity"], 10300.0, places=2)
+
 
 if __name__ == "__main__":
     unittest.main()
