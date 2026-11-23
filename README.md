@@ -91,3 +91,4 @@ Consulta [docs/PHASE_1_AUDIT.md](docs/PHASE_1_AUDIT.md) para la auditoría de da
 
 
 - [Fase 4 — Filtros de calidad de señal](docs/PHASE_4_SIGNAL_FILTERS.md)
+- [Fase 5 — Salidas adaptadas a volatilidad con ATR](docs/PHASE_5_ATR_EXITS.md)
