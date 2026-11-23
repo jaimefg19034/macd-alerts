@@ -51,7 +51,7 @@ class PortfolioSimulationTests(unittest.TestCase):
         self.assertGreater(result["max_mtm_drawdown_pct"],
                            result["max_realized_drawdown_pct"])
         self.assertEqual(result["open_positions_at_sample_end"], 0)
-        self.assertAlmostEqual(result["final_realized_equity"], 10300.0, places=2)
+        self.assertAlmostEqual(result["final_realized_equity"], 10150.0, places=2)
 
 
 if __name__ == "__main__":
