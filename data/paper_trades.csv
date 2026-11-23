@@ -1,0 +1,1 @@
+trade_id,strategy_id,strategy_version,symbol,direction,signal_timestamp_utc,entry_timestamp_utc,entry_price,exit_timestamp_utc,exit_price,exit_reason,gross_return_pct,estimated_round_trip_cost_pct,net_return_pct,bars_held
