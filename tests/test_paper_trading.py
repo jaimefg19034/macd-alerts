@@ -27,7 +27,7 @@ class PaperTradingTests(unittest.TestCase):
         self.assertNotIn("TEST", state["positions"])
 
     def test_opposite_cross_closes_position_and_opens_reverse(self):
-        bars = sample_bars()
+        bars = sample_bars()[:5]
         state = {
             "last_processed": {"TEST": 1000},
             "positions": {},
