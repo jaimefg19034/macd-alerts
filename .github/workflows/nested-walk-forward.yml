@@ -1,0 +1,43 @@
+name: Nested walk-forward robustness research
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/nested_walk_forward.py"
+      - "scripts/atr_research.py"
+      - "scripts/atr_exits.py"
+      - "scripts/backtest.py"
+      - "scripts/portfolio_sim.py"
+      - "scripts/strategy_filters.py"
+      - "scripts/data_snapshot.py"
+      - ".github/workflows/nested-walk-forward.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nested-walk-forward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run full test suite
+        run: python -m unittest discover -s tests -v
+      - name: Download one immutable hourly snapshot
+        run: python scripts/data_snapshot.py --lookback-days 700 --output-dir reports/data_snapshot
+      - name: Compare nested-selected ATR parameters against historical 1.5/5 baseline
+        run: |
+          python scripts/nested_walk_forward.py --costs 0.10 0.20 0.30 --data-dir reports/data_snapshot --output reports/nested_walk_forward/summary.json
+      - name: Upload report and exact source data
+        uses: actions/upload-artifact@v4
+        with:
+          name: nested-walk-forward-atr-research
+          path: |
+            reports/data_snapshot/
+            reports/nested_walk_forward/
+          if-no-files-found: error
