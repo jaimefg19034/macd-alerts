@@ -11,6 +11,7 @@ on:
       - "scripts/atr_exits.py"
       - "scripts/portfolio_sim.py"
       - "scripts/signal_quality.py"
+      - "scripts/walk_forward.py"
       - "scripts/strategy_filters.py"
       - "tests/**"
   workflow_dispatch:
@@ -35,7 +36,7 @@ permissions:
 jobs:
   backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -60,10 +61,13 @@ jobs:
           python scripts/backtest.py --cost-pct "$BACKTEST_COST_PCT" --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE"
           python scripts/backtest.py --cost-pct 0.20 --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE_cost_0_20"
           python scripts/backtest.py --cost-pct 0.30 --risk-mode atr --filter-mode "$FILTER_MODE" --output-dir "reports/backtest/atr_1_5x_3x_$FILTER_MODE_cost_0_30"
+          python scripts/walk_forward.py --filter-mode "$FILTER_MODE" --costs 0.10 0.20 0.30 --output reports/walk_forward/summary.json
 
       - name: Upload backtest report
         uses: actions/upload-artifact@v4
         with:
           name: macd-backtest-report
-          path: reports/backtest/
+          path: |
+            reports/backtest/
+            reports/walk_forward/
           if-no-files-found: error
