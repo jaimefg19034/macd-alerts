@@ -7,7 +7,8 @@ on:
     paths:
       - ".github/workflows/backtest.yml"
       - "scripts/backtest.py"
-      - "tests/test_backtest.py"
+      - "scripts/risk_management.py"
+      - "tests/**"
   workflow_dispatch:
     inputs:
       cost_pct:
