@@ -49,3 +49,30 @@ Los costes son escenarios hipotéticos uniformes, no tarifas verificadas de un b
 El resultado agregado oculta diferencias fuertes entre símbolos. En la variante EMA200 + ADX + RSI, los mejores retornos medios netos por operación fueron MRNA (+1,4178%, 32 operaciones), NVDA (+0,8891%, 33), MU (+0,7790%, 39), AVGO (+0,5697%, 27) y GOOGL (+0,4866%, 42). Entre los peores: TSLA (-0,8868%, 39), SAN.MC (-0,2510%, 37), EURGBP=X (-0,0963%, 72), EURUSD=X (-0,0950%, 79) y META (-0,0449%, 39).
 
 Esto no justifica excluir o seleccionar activos todavía: MRNA puede dominar resultados con una muestra relativamente pequeña y sus movimientos extremos pueden no repetirse. Además, la cartera simulada no incluye FX ni SAN.MC por diferencias de divisa, aunque sus operaciones sí aparecen en las estadísticas agrupadas. El siguiente estudio debe medir consistencia por activo y por ventana, no solo el retorno medio agregado, y separar universos de acciones y FX antes de compararlos.
+
+
+## Optimización ATR con separación desarrollo/OOS (23-11-2026)
+
+Se añadió un experimento independiente en `scripts/atr_research.py`. La selección se realiza únicamente con el primer 50% del histórico, usando el filtro EMA200 + ADX y un coste supuesto del 0,20% por operación completa. Se compararon 16 combinaciones predefinidas: stop de 1,0 / 1,5 / 2,0 / 2,5 ATR y objetivo de 2,0 / 3,0 / 4,0 / 5,0 ATR. Solo se admiten configuraciones con al menos 100 operaciones de desarrollo y profit factor finito.
+
+La combinación seleccionada fue **stop 1,5 ATR / objetivo 5,0 ATR** (665 operaciones de desarrollo, acierto 26,32% aproximadamente, PF 1,0383 y retorno neto medio +0,0440% por operación al coste supuesto del 0,20%). La selección no significa que sea una configuración rentable: el margen estadístico del periodo de desarrollo es reducido.
+
+Con esos parámetros congelados, se evaluó el 50% posterior en cuatro ventanas cronológicas. Resultados OOS agrupados:
+
+| Coste supuesto | Operaciones | Acierto | Retorno neto medio | Profit factor | Retorno cartera MTM | DD máximo MTM |
+|---|---:|---:|---:|---:|---:|---:|
+| 0,10% | 704 | 26,85% | +0,3233% | 1,2509 | +33,77% | 13,14% |
+| 0,20% | 704 | 26,85% | +0,2233% | 1,1640 | +22,60% | 14,32% |
+| 0,30% | 704 | 25,85% | +0,1233% | 1,0859 | +12,39% | 15,47% |
+
+Rentabilidad MTM de cartera por ventana:
+
+| Coste | Ventana 1 | Ventana 2 | Ventana 3 | Ventana 4 |
+|---|---:|---:|---:|---:|
+| 0,10% | +0,60% | +19,96% | +7,90% | +2,73% |
+| 0,20% | -1,98% | +17,94% | +5,66% | +0,37% |
+| 0,30% | -4,49% | +15,96% | +3,47% | -1,93% |
+
+Lectura: esta combinación mejora los resultados agregados de la hipótesis ATR 1,5/3,0 previamente estudiada en esta misma muestra, pero la ventaja no es uniforme: la primera ventana empeora con costes altos y la cuarta apenas supera cero al 0,20% y cae al 0,30%. La tasa de acierto es baja; el resultado depende de que las operaciones ganadoras compensen muchas pérdidas. No debemos interpretar el +33,77% como una previsión ni como rentabilidad esperable.
+
+**Importante:** esta prueba utiliza el mismo histórico que se había usado en análisis anteriores, aunque la mitad OOS no se utilizó para escoger la combinación. La búsqueda de 16 configuraciones sobre el periodo de desarrollo puede generar sobreajuste; hace falta validación walk-forward anidada o un nuevo periodo futuro no utilizado, además de costes reales del bróker. La simulación de cartera sigue limitada a acciones USD y a cierres horarios; no incluye intrabar, dividendos, préstamo/financiación ni conversión de divisas. La variante 1,5/5,0 queda solo como hipótesis de investigación: no se ha activado en Telegram ni en paper trading.
