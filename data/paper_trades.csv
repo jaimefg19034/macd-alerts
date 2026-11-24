@@ -1,1 +1,2 @@
 trade_id,strategy_id,strategy_version,symbol,direction,signal_timestamp_utc,entry_timestamp_utc,entry_price,exit_timestamp_utc,exit_price,exit_reason,stop_price,target_price,gross_return_pct,estimated_round_trip_cost_pct,net_return_pct,bars_held
+macd_1h_12_26_9_close:EURUSD=X:BUY:1795485600,macd_1h_12_26_9_close,1.1.0,EURUSD=X,BUY,2026-11-24T02:00:00+00:00,2026-11-24T02:00:00+00:00,1.0918222666,2026-11-24T14:00:00+00:00,1.0972813779,TAKE_PROFIT,1.0890927109,1.0972813779,0.500000,0.100000,0.400000,2
