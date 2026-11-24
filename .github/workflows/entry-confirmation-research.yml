@@ -1,0 +1,39 @@
+name: Entry confirmation filter research
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/entry_confirmation_research.py"
+      - "scripts/atr_research.py"
+      - "scripts/atr_exits.py"
+      - "scripts/backtest.py"
+      - "scripts/portfolio_sim.py"
+      - "scripts/strategy_filters.py"
+      - "scripts/data_snapshot.py"
+      - ".github/workflows/entry-confirmation-research.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run test suite
+        run: python -m unittest discover -s tests -v
+      - name: Download one immutable hourly snapshot
+        run: python scripts/data_snapshot.py --lookback-days 700 --output-dir reports/data_snapshot
+      - name: Compare entry confirmation filters
+        run: python scripts/entry_confirmation_research.py --costs 0.10 0.20 0.30 --data-dir reports/data_snapshot --output reports/entry_confirmation/summary.json
+      - name: Upload report and exact source data
+        uses: actions/upload-artifact@v4
+        with:
+          name: entry-confirmation-filter-research
+          path: |
+            reports/data_snapshot/
+            reports/entry_confirmation/
+          if-no-files-found: error
