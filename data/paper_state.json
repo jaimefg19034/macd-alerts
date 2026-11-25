@@ -4,8 +4,8 @@
     "AMD": 1795554000,
     "AMZN": 1795554000,
     "AVGO": 1795554000,
-    "EURGBP=X": 1795546800,
-    "EURUSD=X": 1795546800,
+    "EURGBP=X": 1795593600,
+    "EURUSD=X": 1795593600,
     "GOOGL": 1795554000,
     "JPM": 1795554000,
     "META": 1795554000,
@@ -14,7 +14,7 @@
     "MU": 1795554000,
     "NVDA": 1795554000,
     "OCGN": 1795554000,
-    "SAN.MC": 1795537800,
+    "SAN.MC": 1795593600,
     "TSLA": 1795554000,
     "XOM": 1795554000
   },
@@ -23,8 +23,8 @@
     "AMD": 1795552200,
     "AMZN": 1795552200,
     "AVGO": 1795552200,
-    "EURGBP=X": 1795543200,
-    "EURUSD=X": 1795543200,
+    "EURGBP=X": 1795590000,
+    "EURUSD=X": 1795590000,
     "GOOGL": 1795552200,
     "JPM": 1795552200,
     "META": 1795552200,
@@ -59,14 +59,24 @@
       "target_price": 313.3260125732422
     },
     "EURGBP=X": {
-      "direction": "SELL",
-      "entry_index": 994,
-      "entry_price": 0.8362200260162354,
-      "entry_timestamp": 1795543200,
+      "direction": "BUY",
+      "entry_index": 1005,
+      "entry_price": 0.836139976978302,
+      "entry_timestamp": 1795582800,
       "risk_mode": "fixed_sl_tp_v1",
-      "signal_timestamp": 1795543200,
-      "stop_price": 0.8383105760812759,
-      "target_price": 0.8320389258861541
+      "signal_timestamp": 1795582800,
+      "stop_price": 0.8340496270358563,
+      "target_price": 0.8403206768631934
+    },
+    "EURUSD=X": {
+      "direction": "SELL",
+      "entry_index": 1001,
+      "entry_price": 1.0961307287216187,
+      "entry_timestamp": 1795572000,
+      "risk_mode": "fixed_sl_tp_v1",
+      "signal_timestamp": 1795572000,
+      "stop_price": 1.0988710555434227,
+      "target_price": 1.0906500750780106
     },
     "MU": {
       "direction": "SELL",
