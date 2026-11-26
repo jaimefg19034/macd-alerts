@@ -4,8 +4,8 @@
     "AMD": 1795640400,
     "AMZN": 1795640400,
     "AVGO": 1795640400,
-    "EURGBP=X": 1795690800,
-    "EURUSD=X": 1795690800,
+    "EURGBP=X": 1795726800,
+    "EURUSD=X": 1795726800,
     "GOOGL": 1795640400,
     "JPM": 1795640400,
     "META": 1795640400,
@@ -14,7 +14,7 @@
     "MU": 1795640400,
     "NVDA": 1795640400,
     "OCGN": 1795640400,
-    "SAN.MC": 1795690800,
+    "SAN.MC": 1795710600,
     "TSLA": 1795640400,
     "XOM": 1795640400
   },
@@ -23,8 +23,8 @@
     "AMD": 1795638600,
     "AMZN": 1795638600,
     "AVGO": 1795638600,
-    "EURGBP=X": 1795687200,
-    "EURUSD=X": 1795687200,
+    "EURGBP=X": 1795723200,
+    "EURUSD=X": 1795723200,
     "GOOGL": 1795638600,
     "JPM": 1795638600,
     "META": 1795638600,
@@ -33,7 +33,7 @@
     "MU": 1795638600,
     "NVDA": 1795638600,
     "OCGN": 1795638600,
-    "SAN.MC": 1795687200,
+    "SAN.MC": 1795708800,
     "TSLA": 1795638600,
     "XOM": 1795638600
   },
@@ -59,24 +59,24 @@
       "target_price": 306.1520349121094
     },
     "EURGBP=X": {
-      "direction": "BUY",
-      "entry_index": 1032,
-      "entry_price": 0.8374000191688538,
-      "entry_timestamp": 1795680000,
+      "direction": "SELL",
+      "entry_index": 1043,
+      "entry_price": 0.8369500041007996,
+      "entry_timestamp": 1795719600,
       "risk_mode": "fixed_sl_tp_v1",
-      "signal_timestamp": 1795680000,
-      "stop_price": 0.8353065191209317,
-      "target_price": 0.8415870192646979
+      "signal_timestamp": 1795719600,
+      "stop_price": 0.8390423791110515,
+      "target_price": 0.8327652540802956
     },
     "EURUSD=X": {
       "direction": "SELL",
-      "entry_index": 1026,
-      "entry_price": 1.0969723463058472,
-      "entry_timestamp": 1795662000,
+      "entry_index": 1040,
+      "entry_price": 1.0973334312438965,
+      "entry_timestamp": 1795712400,
       "risk_mode": "fixed_sl_tp_v1",
-      "signal_timestamp": 1795662000,
-      "stop_price": 1.0997147771716118,
-      "target_price": 1.0914874845743179
+      "signal_timestamp": 1795712400,
+      "stop_price": 1.1000767648220062,
+      "target_price": 1.091846764087677
     },
     "JPM": {
       "direction": "BUY",
