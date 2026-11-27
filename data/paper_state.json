@@ -1,30 +1,11 @@
 {
   "last_bar_processed": {
-    "AAPL": 1795640400,
-    "AMD": 1795640400,
-    "AMZN": 1795640400,
-    "AVGO": 1795640400,
-    "EURGBP=X": 1795748400,
-    "EURUSD=X": 1795748400,
-    "GOOGL": 1795640400,
-    "JPM": 1795640400,
-    "META": 1795640400,
-    "MRNA": 1795640400,
-    "MSFT": 1795640400,
-    "MU": 1795640400,
-    "NVDA": 1795640400,
-    "OCGN": 1795640400,
-    "SAN.MC": 1795710600,
-    "TSLA": 1795640400,
-    "XOM": 1795640400
-  },
-  "last_processed": {
     "AAPL": 1795638600,
     "AMD": 1795638600,
     "AMZN": 1795638600,
     "AVGO": 1795638600,
-    "EURGBP=X": 1795744800,
-    "EURUSD=X": 1795744800,
+    "EURGBP=X": 1795784400,
+    "EURUSD=X": 1795784400,
     "GOOGL": 1795638600,
     "JPM": 1795638600,
     "META": 1795638600,
@@ -33,7 +14,26 @@
     "MU": 1795638600,
     "NVDA": 1795638600,
     "OCGN": 1795638600,
-    "SAN.MC": 1795708800,
+    "SAN.MC": 1795784400,
+    "TSLA": 1795638600,
+    "XOM": 1795638600
+  },
+  "last_processed": {
+    "AAPL": 1795638600,
+    "AMD": 1795638600,
+    "AMZN": 1795638600,
+    "AVGO": 1795638600,
+    "EURGBP=X": 1795780800,
+    "EURUSD=X": 1795780800,
+    "GOOGL": 1795638600,
+    "JPM": 1795638600,
+    "META": 1795638600,
+    "MRNA": 1795638600,
+    "MSFT": 1795638600,
+    "MU": 1795638600,
+    "NVDA": 1795638600,
+    "OCGN": 1795638600,
+    "SAN.MC": 1795780800,
     "TSLA": 1795638600,
     "XOM": 1795638600
   },
@@ -70,13 +70,13 @@
     },
     "EURUSD=X": {
       "direction": "SELL",
-      "entry_index": 1040,
-      "entry_price": 1.0973334312438965,
-      "entry_timestamp": 1795712400,
+      "entry_index": 1041,
+      "entry_price": 1.0967316627502441,
+      "entry_timestamp": 1795770000,
       "risk_mode": "fixed_sl_tp_v1",
-      "signal_timestamp": 1795712400,
-      "stop_price": 1.1000767648220062,
-      "target_price": 1.091846764087677
+      "signal_timestamp": 1795770000,
+      "stop_price": 1.0994734919071196,
+      "target_price": 1.091248004436493
     },
     "JPM": {
       "direction": "BUY",
@@ -117,16 +117,6 @@
       "signal_timestamp": 1795638600,
       "stop_price": 482.1673596191406,
       "target_price": 504.19531005859375
-    },
-    "SAN.MC": {
-      "direction": "BUY",
-      "entry_index": 389,
-      "entry_price": 10.34000015258789,
-      "entry_timestamp": 1795687200,
-      "risk_mode": "fixed_sl_tp_v1",
-      "signal_timestamp": 1795687200,
-      "stop_price": 10.184900150299072,
-      "target_price": 10.650200157165528
     },
     "TSLA": {
       "direction": "BUY",
