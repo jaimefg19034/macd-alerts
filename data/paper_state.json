@@ -1,41 +1,41 @@
 {
   "last_bar_processed": {
-    "AAPL": 1795638600,
-    "AMD": 1795638600,
-    "AMZN": 1795638600,
-    "AVGO": 1795638600,
-    "EURGBP=X": 1795784400,
-    "EURUSD=X": 1795784400,
-    "GOOGL": 1795638600,
-    "JPM": 1795638600,
-    "META": 1795638600,
-    "MRNA": 1795638600,
-    "MSFT": 1795638600,
-    "MU": 1795638600,
-    "NVDA": 1795638600,
-    "OCGN": 1795638600,
-    "SAN.MC": 1795784400,
-    "TSLA": 1795638600,
-    "XOM": 1795638600
+    "AAPL": 1795802400,
+    "AMD": 1795802400,
+    "AMZN": 1795802400,
+    "AVGO": 1795802400,
+    "EURGBP=X": 1795816800,
+    "EURUSD=X": 1795816800,
+    "GOOGL": 1795802400,
+    "JPM": 1795802400,
+    "META": 1795802400,
+    "MRNA": 1795802400,
+    "MSFT": 1795802400,
+    "MU": 1795802400,
+    "NVDA": 1795802400,
+    "OCGN": 1795802400,
+    "SAN.MC": 1795797000,
+    "TSLA": 1795802400,
+    "XOM": 1795802400
   },
   "last_processed": {
-    "AAPL": 1795638600,
-    "AMD": 1795638600,
-    "AMZN": 1795638600,
-    "AVGO": 1795638600,
-    "EURGBP=X": 1795780800,
-    "EURUSD=X": 1795780800,
-    "GOOGL": 1795638600,
-    "JPM": 1795638600,
-    "META": 1795638600,
-    "MRNA": 1795638600,
-    "MSFT": 1795638600,
-    "MU": 1795638600,
-    "NVDA": 1795638600,
-    "OCGN": 1795638600,
-    "SAN.MC": 1795780800,
-    "TSLA": 1795638600,
-    "XOM": 1795638600
+    "AAPL": 1795800600,
+    "AMD": 1795800600,
+    "AMZN": 1795800600,
+    "AVGO": 1795800600,
+    "EURGBP=X": 1795813200,
+    "EURUSD=X": 1795813200,
+    "GOOGL": 1795800600,
+    "JPM": 1795800600,
+    "META": 1795800600,
+    "MRNA": 1795800600,
+    "MSFT": 1795800600,
+    "MU": 1795800600,
+    "NVDA": 1795800600,
+    "OCGN": 1795800600,
+    "SAN.MC": 1795795200,
+    "TSLA": 1795800600,
+    "XOM": 1795800600
   },
   "positions": {
     "AAPL": {
@@ -47,6 +47,16 @@
       "signal_timestamp": 1795631400,
       "stop_price": 349.46815841674805,
       "target_price": 365.4337088012695
+    },
+    "AMZN": {
+      "direction": "BUY",
+      "entry_index": 295,
+      "entry_price": 251.27499389648438,
+      "entry_timestamp": 1795793400,
+      "risk_mode": "fixed_sl_tp_v1",
+      "signal_timestamp": 1795793400,
+      "stop_price": 247.5058689880371,
+      "target_price": 258.81324371337894
     },
     "AVGO": {
       "direction": "BUY",
@@ -78,25 +88,15 @@
       "stop_price": 1.0994734919071196,
       "target_price": 1.091248004436493
     },
-    "JPM": {
+    "GOOGL": {
       "direction": "BUY",
       "entry_index": 297,
-      "entry_price": 313.8800048828125,
-      "entry_timestamp": 1795627800,
+      "entry_price": 273.7300109863281,
+      "entry_timestamp": 1795800600,
       "risk_mode": "fixed_sl_tp_v1",
-      "signal_timestamp": 1795627800,
-      "stop_price": 309.1718048095703,
-      "target_price": 323.29640502929686
-    },
-    "META": {
-      "direction": "BUY",
-      "entry_index": 297,
-      "entry_price": 594.014404296875,
-      "entry_timestamp": 1795627800,
-      "risk_mode": "fixed_sl_tp_v1",
-      "signal_timestamp": 1795627800,
-      "stop_price": 585.1041882324218,
-      "target_price": 611.8348364257813
+      "signal_timestamp": 1795800600,
+      "stop_price": 269.6240608215332,
+      "target_price": 281.941911315918
     },
     "MRNA": {
       "direction": "SELL",
@@ -117,6 +117,16 @@
       "signal_timestamp": 1795638600,
       "stop_price": 482.1673596191406,
       "target_price": 504.19531005859375
+    },
+    "NVDA": {
+      "direction": "BUY",
+      "entry_index": 298,
+      "entry_price": 150.58999633789062,
+      "entry_timestamp": 1795802400,
+      "risk_mode": "fixed_sl_tp_v1",
+      "signal_timestamp": 1795804200,
+      "stop_price": 148.33114639282226,
+      "target_price": 155.10769622802735
     },
     "TSLA": {
       "direction": "BUY",
